@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 from flask import Flask, render_template_string, request, redirect
 
@@ -92,18 +91,34 @@ HTML_TEMPLATE = """
             <th>Team 1</th>
             <th>Team 2</th>
             <th>Score</th>
+            <th>Actions</th>
         </tr>
         {% for game in games %}
-        <tr>
+        <tr id="game{{loop.index0}}">
+            {% if edit_id == loop.index0 %}
+            <td colspan="3">
+                <form method="POST" action="/edit_game/{{loop.index0}}" style="margin:0">
+                    <input name="team1" value="{{game[0]}}" required>
+                    <input name="team2" value="{{game[1]}}" required>
+                    <input name="score1" type="number" value="{{game[2]}}" required>
+                    <input name="score2" type="number" value="{{game[3]}}" required>
+                    <input type="submit" value="Save">
+                </form>
+            </td>
+            {% else %}
             <td>{{game[0]}}</td>
             <td>{{game[1]}}</td>
             <td>{{game[2]}} - {{game[3]}}</td>
+            {% endif %}
+            <td>
+                <a href="/?edit={{loop.index0}}" class="edit">Edit</a>
+                <a href="/delete_game/{{loop.index0}}" class="delete">Delete</a>
+            </td>
         </tr>
         {% endfor %}
     </table>
 </body>
-</html>
-"""
+</html>"""
 
 def process_games():
     teams.clear()
@@ -123,7 +138,12 @@ def get_sorted_teams():
 @app.route('/')
 def home():
     process_games()
-    return render_template_string(HTML_TEMPLATE, games=games, standings=get_sorted_teams())
+    edit_id = request.args.get('edit')
+    try:
+        edit_id = int(edit_id)
+    except:
+        edit_id = None
+    return render_template_string(HTML_TEMPLATE, games=games, standings=get_sorted_teams(), edit_id=edit_id)
 
 @app.route('/add_game', methods=['POST'])
 def add_game():
@@ -133,6 +153,21 @@ def add_game():
     score2 = int(request.form['score2'])
     games.append((team1, team2, score1, score2))
     return redirect('/')
+
+@app.route('/edit_game/<int:game_index>', methods=['POST'])
+def edit_game(game_index):
+    team1 = request.form['team1']
+    team2 = request.form['team2']
+    score1 = int(request.form['score1'])
+    score2 = int(request.form['score2'])
+    games[game_index] = (team1, team2, score1, score2)
+    return redirect('/')
+
+@app.route('/delete_game/<int:game_index>')
+def delete_game(game_index):
+    del games[game_index]
+    return redirect('/')
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
