@@ -68,18 +68,6 @@ HTML_TEMPLATE = """
         <input type="submit" value="Add Game">
     </form>
 
-    <h2>Teams</h2>
-    <form method="GET" id="teamFilter">
-        {% for team in all_teams %}
-        <label style="display: inline-block; margin-right: 15px;">
-            <input type="checkbox" name="teams" value="{{team}}" 
-                   {% if not selected_teams or team in selected_teams %}checked{% endif %}
-                   onchange="this.form.submit()">
-            {{team}}
-        </label>
-        {% endfor %}
-    </form>
-
     <h2>Current Standings</h2>
     <table>
         <tr>
@@ -162,20 +150,10 @@ def home():
         edit_id = int(edit_id)
     except:
         edit_id = None
-    
-    all_teams = sorted(set(team for game in games for team in [game[0], game[1]]))
-    selected_teams = request.args.getlist('teams')
-    
-    standings = get_sorted_teams()
-    if selected_teams:
-        standings = [(team, stats) for team, stats in standings if team in selected_teams]
-    
     return render_template_string(HTML_TEMPLATE,
                                   games=games,
-                                  standings=standings,
-                                  edit_id=edit_id,
-                                  all_teams=all_teams,
-                                  selected_teams=selected_teams)
+                                  standings=get_sorted_teams(),
+                                  edit_id=edit_id)
 
 
 @app.route('/add_game', methods=['POST'])
