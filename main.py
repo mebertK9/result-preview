@@ -3,7 +3,9 @@ from flask import Flask, render_template_string, request, redirect
 
 app = Flask(__name__)
 
+
 class TeamStats:
+
     def __init__(self):
         self.games = 0
         self.wins = 0
@@ -26,6 +28,7 @@ class TeamStats:
 
     def point_diff(self):
         return self.points - self.against
+
 
 teams = defaultdict(TeamStats)
 games = [
@@ -120,6 +123,7 @@ HTML_TEMPLATE = """
 </body>
 </html>"""
 
+
 def process_games():
     teams.clear()
     for t1, t2, p1, p2 in games:
@@ -128,12 +132,15 @@ def process_games():
         teams[t1].record_game(p1, p2, t2, win1)
         teams[t2].record_game(p2, p1, t1, win2)
 
+
 def get_sorted_teams():
-    return sorted(teams.items(), key=lambda x: (
-        -x[1].win_pct(),
-        -x[1].opponents[x[0]][0],
-        -x[1].point_diff(),
-    ))
+    return sorted(teams.items(),
+                  key=lambda x: (
+                      -x[1].win_pct(),
+                      -x[1].opponents[x[0]][0],
+                      -x[1].point_diff(),
+                  ))
+
 
 @app.route('/')
 def home():
@@ -143,7 +150,11 @@ def home():
         edit_id = int(edit_id)
     except:
         edit_id = None
-    return render_template_string(HTML_TEMPLATE, games=games, standings=get_sorted_teams(), edit_id=edit_id)
+    return render_template_string(HTML_TEMPLATE,
+                                  games=games,
+                                  standings=get_sorted_teams(),
+                                  edit_id=edit_id)
+
 
 @app.route('/add_game', methods=['POST'])
 def add_game():
@@ -154,6 +165,7 @@ def add_game():
     games.append((team1, team2, score1, score2))
     return redirect('/')
 
+
 @app.route('/edit_game/<int:game_index>', methods=['POST'])
 def edit_game(game_index):
     team1 = request.form['team1']
@@ -162,6 +174,7 @@ def edit_game(game_index):
     score2 = int(request.form['score2'])
     games[game_index] = (team1, team2, score1, score2)
     return redirect('/')
+
 
 @app.route('/delete_game/<int:game_index>')
 def delete_game(game_index):
