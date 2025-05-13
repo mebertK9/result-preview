@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Basketball Stats</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        table { border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 8px; border: 1px solid #ddd; }
+        form { margin: 20px 0; }
+        input { margin: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Add New Game</h2>
+    <form method="POST" action="/add_game">
+        <input name="team1" placeholder="Team 1" required>
+        <input name="team2" placeholder="Team 2" required>
+        <input name="score1" type="number" placeholder="Score Team 1" required>
+        <input name="score2" type="number" placeholder="Score Team 2" required>
+        <input type="submit" value="Add Game">
+    </form>
+
+    <h2>Teams</h2>
+    <form method="GET" id="teamFilter">
+        {% for team in all_teams %}
+        <label style="display: inline-block; margin-right: 15px;">
+            <input type="checkbox" name="teams" value="{{team.name}}" 
+                   {% if not selected_teams or team.name in selected_teams %}checked{% endif %}
+                   onchange="this.form.submit()">
+            {{team}}
+        </label>
+        {% endfor %}
+    </form>
+
+    <h2>Current Standings</h2>
+    <table>
+        <tr>
+            <th>Team</th>
+            <th>Games</th>
+            <th>Wins</th>
+            <th>Win%</th>
+            <th>Points</th>
+            <th>Against</th>
+            <th>Difference</th>
+        </tr>
+        {% for name, stats in standings %}
+        <tr>
+            <td>{{name}}</td>
+            <td>{{stats.games}}</td>
+            <td>{{stats.wins}}</td>
+            <td>{{stats.win_pct()}}</td>
+            <td>{{stats.points}}</td>
+            <td>{{stats.against}}</td>
+            <td>{{stats.point_diff()}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Games</h2>
+    <table>
+        <tr>
+            <th>Team 1</th>
+            <th>Team 2</th>
+            <th>Score</th>
+            <th>Actions</th>
+        </tr>
+        {% for game in games %}
+        <tr id="game{{loop.index0}}">
+            {% if edit_id == loop.index0 %}
+            <td colspan="3">
+                <form method="POST" action="/edit_game/{{loop.index0}}" style="margin:0">
+                    <input name="team1" value="{{game[0]}}" required>
+                    <input name="team2" value="{{game[1]}}" required>
+                    <input name="score1" type="number" value="{{game[2]}}" required>
+                    <input name="score2" type="number" value="{{game[3]}}" required>
+                    <input type="submit" value="Save">
+                </form>
+            </td>
+            {% else %}
+            <td>{{game[0]}}</td>
+            <td>{{game[1]}}</td>
+            <td>{{game[2]}} - {{game[3]}}</td>
+            {% endif %}
+            <td>
+                <a href="/?edit={{loop.index0}}" class="edit">Edit</a>
+                <a href="/delete_game/{{loop.index0}}" class="delete">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
