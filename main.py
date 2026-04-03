@@ -58,32 +58,35 @@ def compute_standings(filter_teams=None):
 def home():
     all_team_names = sorted(set(
         team for game in saison_25_26 for team in [game[0], game[1]]))
-    all_teams = [get_team(n) for n in all_team_names]
 
     raw_selected = request.args.getlist('teams')
     selected_teams = set(raw_selected) if raw_selected else set(DEFAULT_TEAMS)
 
-    direct_compare = request.args.get('direct_compare') == '1'
+    compare_teams = set(request.args.getlist('compare'))
 
     full_standings = compute_standings()
 
     direct_standings = None
-    if direct_compare:
+    if len(compare_teams) >= 2:
         direct_standings = [
-            (team, stats) for team, stats in compute_standings(filter_teams=selected_teams)
-            if team.name in selected_teams
+            (team, stats)
+            for team, stats in compute_standings(filter_teams=compare_teams)
+            if team.name in compare_teams
         ]
 
     def game_visible(game):
         return game[0] in selected_teams or game[1] in selected_teams
 
-    visible_completed = [g for g in completed_games if game_visible(g)]
-    visible_pending = [(idx, g) for idx, g in enumerate(pending_games) if game_visible(g)]
+    def is_compare_game(game):
+        return len(compare_teams) >= 2 and game[0] in compare_teams and game[1] in compare_teams
+
+    visible_completed = [(g, is_compare_game(g)) for g in completed_games if game_visible(g)]
+    visible_pending = [(idx, g, is_compare_game(g)) for idx, g in enumerate(pending_games) if game_visible(g)]
 
     return render_template('index.html',
-                           all_teams=all_team_names,
+                           all_team_names=all_team_names,
                            selected_teams=selected_teams,
-                           direct_compare=direct_compare,
+                           compare_teams=compare_teams,
                            full_standings=full_standings,
                            direct_standings=direct_standings,
                            hypothetical=hypothetical,

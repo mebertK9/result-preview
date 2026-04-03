@@ -10,21 +10,22 @@
         th { background: #f5f5f5; }
         input[type=number] { width: 55px; padding: 4px; }
         .hypo-row { background: #fffbe6; }
+        .compare-row { background: #ddeeff; }
+        .compare-game { background: #ddeeff; }
+        .hypo-compare { background: #cce8cc; }
         .btn-clear { color: #c00; text-decoration: none; margin-left: 8px; font-size: 0.85em; }
         .btn-set { padding: 3px 8px; cursor: pointer; }
-        .switch-bar { margin: 10px 0 20px; }
-        .switch-bar label { font-weight: bold; cursor: pointer; }
-        h3 { margin-top: 30px; color: #444; }
+        .bold { font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h2>Teams</h2>
     <form method="GET" id="teamFilter">
-        {% if direct_compare %}
-        <input type="hidden" name="direct_compare" value="1">
-        {% endif %}
-        {% for name in all_teams %}
+        {% for t in compare_teams %}
+        <input type="hidden" name="compare" value="{{t}}">
+        {% endfor %}
+        {% for name in all_team_names %}
         <label style="display: inline-block; margin-right: 15px;">
             <input type="checkbox" name="teams" value="{{name}}"
                    {% if name in selected_teams %}checked{% endif %}
@@ -34,46 +35,47 @@
         {% endfor %}
     </form>
 
-    <div class="switch-bar">
-        {% if direct_compare %}
-            <a href="?{% for t in selected_teams %}teams={{t|urlencode}}&{% endfor %}direct_compare=0">
-                ☑ Direkter Vergleich — klicken zum Deaktivieren
-            </a>
-        {% else %}
-            <a href="?{% for t in selected_teams %}teams={{t|urlencode}}&{% endfor %}direct_compare=1">
-                ☐ Direkter Vergleich aktivieren
-            </a>
-        {% endif %}
-    </div>
-
     <h2>Gesamttabelle</h2>
-    <table>
-        <tr>
-            <th>#</th>
-            <th>Team</th>
-            <th>Spiele</th>
-            <th>Siege</th>
-            <th>Punkte</th>
-            <th>Körbe</th>
-            <th>Gegenkörbe</th>
-            <th>Differenz</th>
-        </tr>
-        {% for name, stats in full_standings %}
-        <tr {% if name.name in selected_teams %}style="font-weight:bold"{% endif %}>
-            <td>{{loop.index}}</td>
-            <td>{{name}}</td>
-            <td>{{stats.games}}</td>
-            <td>{{stats.wins}}</td>
-            <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
-            <td>{{stats.points}}</td>
-            <td>{{stats.against}}</td>
-            <td>{{stats.point_diff()}}</td>
-        </tr>
+    <form method="GET" id="compareForm">
+        {% for t in selected_teams %}
+        <input type="hidden" name="teams" value="{{t}}">
         {% endfor %}
-    </table>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>Spiele</th>
+                <th>Siege</th>
+                <th>Punkte</th>
+                <th>Körbe</th>
+                <th>Gegenkörbe</th>
+                <th>Differenz</th>
+                <th title="Direkter Vergleich">DV</th>
+            </tr>
+            {% for name, stats in full_standings %}
+            {% set in_compare = name.name in compare_teams %}
+            {% set in_selected = name.name in selected_teams %}
+            <tr class="{% if in_compare %}compare-row{% endif %}">
+                <td>{{loop.index}}</td>
+                <td class="{% if in_selected %}bold{% endif %}">{{name}}</td>
+                <td>{{stats.games}}</td>
+                <td>{{stats.wins}}</td>
+                <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+                <td>{{stats.points}}</td>
+                <td>{{stats.against}}</td>
+                <td>{{stats.point_diff()}}</td>
+                <td style="text-align:center">
+                    <input type="checkbox" name="compare" value="{{name.name}}"
+                           {% if in_compare %}checked{% endif %}
+                           onchange="this.form.submit()">
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </form>
 
-    {% if direct_compare and direct_standings %}
-    <h2>Direkter Vergleich (ausgewählte Teams)</h2>
+    {% if direct_standings %}
+    <h2>Direkter Vergleich</h2>
     <table>
         <tr>
             <th>#</th>
@@ -107,22 +109,23 @@
             <th>Team 2</th>
             <th>Ergebnis (Was wäre wenn?)</th>
         </tr>
-        {% for idx, game in visible_pending %}
-        <tr {% if idx in hypothetical %}class="hypo-row"{% endif %}>
-            <td {% if game[0] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[0]}}</td>
-            <td {% if game[1] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[1]}}</td>
+        {% for idx, game, is_compare in visible_pending %}
+        {% set has_hypo = idx in hypothetical %}
+        <tr class="{% if is_compare and has_hypo %}hypo-compare{% elif is_compare %}compare-game{% elif has_hypo %}hypo-row{% endif %}">
+            <td class="{% if game[0] in selected_teams %}bold{% endif %}">{{game[0]}}</td>
+            <td class="{% if game[1] in selected_teams %}bold{% endif %}">{{game[1]}}</td>
             <td>
                 <form method="POST" action="/set_score/{{idx}}" style="display:inline; margin:0;">
                     <input type="number" name="score1"
-                           value="{% if idx in hypothetical %}{{hypothetical[idx][0]}}{% endif %}"
+                           value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}"
                            placeholder="–">
                     :
                     <input type="number" name="score2"
-                           value="{% if idx in hypothetical %}{{hypothetical[idx][1]}}{% endif %}"
+                           value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}"
                            placeholder="–">
                     <button type="submit" class="btn-set">✓</button>
                 </form>
-                {% if idx in hypothetical %}
+                {% if has_hypo %}
                 <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
                 {% endif %}
             </td>
@@ -137,10 +140,10 @@
             <th>Team 2</th>
             <th>Ergebnis</th>
         </tr>
-        {% for game in visible_completed %}
-        <tr>
-            <td {% if game[0] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[0]}}</td>
-            <td {% if game[1] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[1]}}</td>
+        {% for game, is_compare in visible_completed %}
+        <tr {% if is_compare %}class="compare-game"{% endif %}>
+            <td class="{% if game[0] in selected_teams %}bold{% endif %}">{{game[0]}}</td>
+            <td class="{% if game[1] in selected_teams %}bold{% endif %}">{{game[1]}}</td>
             <td>{{game[2]}} : {{game[3]}}</td>
         </tr>
         {% endfor %}
