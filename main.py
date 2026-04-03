@@ -148,6 +148,12 @@ def home():
         saved_compare_teams = compare_teams
         save_state(selected_teams, compare_teams)
 
+    hypo_count = {}
+    for idx, (t1, t2) in enumerate(pending_games):
+        if idx in hypothetical:
+            hypo_count[t1] = hypo_count.get(t1, 0) + 1
+            hypo_count[t2] = hypo_count.get(t2, 0) + 1
+
     full_standings = compute_standings()
 
     direct_standings = None
@@ -174,6 +180,7 @@ def home():
                            full_standings=full_standings,
                            direct_standings=direct_standings,
                            hypothetical=hypothetical,
+                           hypo_count=hypo_count,
                            visible_completed=visible_completed,
                            visible_pending=visible_pending)
 

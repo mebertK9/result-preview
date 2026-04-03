@@ -83,7 +83,9 @@
         td { font-size: 0.9rem; }
 
         /* ---- Farben ---- */
-        .hypo-row  { background: #fffbe6; }
+        .hypo-row     { background: #fffbe6; }
+        .hypo-team    { background: #e8e8e8; }
+        .hypo-badge   { color: #666; font-size: 0.82em; font-weight: normal; }
         .compare-row  { background: #ddeeff; }
         .compare-game { background: #ddeeff; }
         .hypo-compare { background: #cce8cc; }
@@ -190,9 +192,12 @@
             {% for name, stats in full_standings %}
             {% set in_compare = name.name in compare_teams %}
             {% set in_selected = name.name in selected_teams %}
-            <tr class="{% if in_compare %}compare-row{% endif %}">
+            {% set hcount = hypo_count.get(name.name, 0) %}
+            <tr class="{% if in_compare %}compare-row{% elif hcount %}hypo-team{% endif %}">
                 <td>{{loop.index}}</td>
-                <td class="{% if in_selected %}bold{% endif %}">{{name}}</td>
+                <td class="{% if in_selected %}bold{% endif %}">
+                    {{name}}{% if hcount %} <span class="hypo-badge">({{hcount}})</span>{% endif %}
+                </td>
                 <td>{{stats.games}}</td>
                 <td>{{stats.wins}}</td>
                 <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>

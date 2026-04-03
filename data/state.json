@@ -1,20 +1,8 @@
 {
   "hypothetical": {
-    "4": [
-      80,
-      90
-    ],
-    "18": [
-      100,
-      80
-    ],
     "22": [
       80,
-      81
-    ],
-    "27": [
-      101,
-      100
+      87
     ],
     "32": [
       65,
@@ -32,31 +20,17 @@
       100,
       99
     ],
-    "36": [
-      110,
-      80
+    "27": [
+      90,
+      60
     ],
-    "63": [
-      70,
-      80
-    ],
-    "48": [
+    "18": [
       80,
-      90
-    ],
-    "53": [
-      91,
-      90
+      70
     ]
   },
   "selected_teams": [
-    "BB Löwen Braunschweig",
-    "SYNTAINICS MBC",
-    "Science City Jena"
+    "BB Löwen Braunschweig"
   ],
-  "compare_teams": [
-    "BB Löwen Braunschweig",
-    "SYNTAINICS MBC",
-    "Science City Jena"
-  ]
+  "compare_teams": []
 }
