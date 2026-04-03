@@ -1,3 +1,5 @@
+import json
+import os
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect
 from models.team import Team
@@ -11,14 +13,38 @@ name_to_team = {}
 completed_games = [g for g in saison_25_26 if len(g) == 4]
 pending_games = [g for g in saison_25_26 if len(g) == 2]
 
-hypothetical = {}  # {index_in_pending_games: (score1, score2)}
-
 DEFAULT_TEAMS = {
     "BB Löwen Braunschweig",
     "MLP Academics Heidelberg",
     "Science City Jena",
     "SYNTAINICS MBC",
 }
+
+STATE_FILE = "data/state.json"
+
+hypothetical = {}
+saved_selected_teams = set(DEFAULT_TEAMS)
+saved_compare_teams = set()
+
+def load_state():
+    global hypothetical, saved_selected_teams, saved_compare_teams
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        hypothetical = {int(k): tuple(v) for k, v in data.get("hypothetical", {}).items()}
+        saved_selected_teams = set(data.get("selected_teams", list(DEFAULT_TEAMS)))
+        saved_compare_teams = set(data.get("compare_teams", []))
+
+def save_state(selected_teams, compare_teams):
+    data = {
+        "hypothetical": {str(k): list(v) for k, v in hypothetical.items()},
+        "selected_teams": sorted(selected_teams),
+        "compare_teams": sorted(compare_teams),
+    }
+    with open(STATE_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+load_state()
 
 def get_team(name):
     if name not in name_to_team:
@@ -56,13 +82,22 @@ def compute_standings(filter_teams=None):
 
 @app.route('/')
 def home():
+    global saved_selected_teams, saved_compare_teams
     all_team_names = sorted(set(
         team for game in saison_25_26 for team in [game[0], game[1]]))
 
     raw_selected = request.args.getlist('teams')
-    selected_teams = set(raw_selected) if raw_selected else set(DEFAULT_TEAMS)
+    if raw_selected:
+        selected_teams = set(raw_selected)
+    else:
+        selected_teams = set(saved_selected_teams)
 
     compare_teams = set(request.args.getlist('compare'))
+
+    if raw_selected or 'compare' in request.args:
+        saved_selected_teams = selected_teams
+        saved_compare_teams = compare_teams
+        save_state(selected_teams, compare_teams)
 
     full_standings = compute_standings()
 
@@ -101,11 +136,13 @@ def set_score(idx):
         hypothetical[idx] = (int(score1), int(score2))
     else:
         hypothetical.pop(idx, None)
+    save_state(saved_selected_teams, saved_compare_teams)
     return redirect(request.referrer or '/')
 
 @app.route('/clear_score/<int:idx>')
 def clear_score(idx):
     hypothetical.pop(idx, None)
+    save_state(saved_selected_teams, saved_compare_teams)
     return redirect(request.referrer or '/')
 
 if __name__ == "__main__":
