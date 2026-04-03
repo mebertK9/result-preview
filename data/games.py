@@ -1,13 +1,8 @@
 saison_25_26 = [
-
     ("Bayern München", "MHP RIESEN Ludwigsburg"),
-
     ("Veolia Towers Hamburg", "Rostock Seawolves"),
     ("Bayern München", "Rostock Seawolves"),
-    ("Science City Jena", "BB Löwen Braunschweig"),
-
     ("Chemnitz 99ers", "ratiopharm Ulm"),
-
     ("BB Löwen Braunschweig", "ratiopharm Ulm"),
     ("SYNTAINICS MBC", "Bayern München"),
     ("Fitness First Würzburg Baskets", "SC RASTA Vechta"),
@@ -17,109 +12,59 @@ saison_25_26 = [
     ("Veolia Towers Hamburg", "Skyliners Frankfurt"),
     ("VET-CONCEPT Gladiators Trier", "MHP RIESEN Ludwigsburg"),
     ("BMA365 Bamberg Baskets", "Science City Jena"),
-
     ("SYNTAINICS MBC", "Veolia Towers Hamburg"),
-
     ("ratiopharm Ulm", "BMA365 Bamberg Baskets"),
-
     ("MHP RIESEN Ludwigsburg", "Alba Berlin"),
-
     ("Science City Jena", "Fitness First Würzburg Baskets"),
-
     ("SC RASTA Vechta", "VET-CONCEPT Gladiators Trier"),
-
     ("Telekom Baskets Bonn", "BB Löwen Braunschweig"),
-
     ("Skyliners Frankfurt", "MLP Academics Heidelberg"),
-
     ("Bayern München", "Chemnitz 99ers"),
-
     ("EWE Baskets Oldenburg", "Rostock Seawolves"),
-
-
+    ("Science City Jena", "BB Löwen Braunschweig"),
     ("Fitness First Würzburg Baskets", "Skyliners Frankfurt"),
-
     ("Chemnitz 99ers", "Science City Jena"),
-
     ("BMA365 Bamberg Baskets", "EWE Baskets Oldenburg"),
-
     ("MLP Academics Heidelberg", "MHP RIESEN Ludwigsburg"),
-
     ("BB Löwen Braunschweig", "SYNTAINICS MBC"),
-
     ("Rostock Seawolves", "ratiopharm Ulm"),
-
     ("Veolia Towers Hamburg", "SC RASTA Vechta"),
-
     ("VET-CONCEPT Gladiators Trier", "Bayern München"),
-
     ("Alba Berlin", "Telekom Baskets Bonn"),
     ("SC RASTA Vechta", "BB Löwen Braunschweig"),
     ("ratiopharm Ulm", "Veolia Towers Hamburg"),
     ("MHP RIESEN Ludwigsburg", "Rostock Seawolves"),
-
     ("Science City Jena", "VET-CONCEPT Gladiators Trier"),
-
     ("EWE Baskets Oldenburg", "MLP Academics Heidelberg"),
-
     ("SYNTAINICS MBC", "Fitness First Würzburg Baskets"),
-
     ("Skyliners Frankfurt", "Alba Berlin"),
-
     ("Chemnitz 99ers", "BMA365 Bamberg Baskets"),
     ("Skyliners Frankfurt", "Telekom Baskets Bonn"),
     ("Fitness First Würzburg Baskets", "ratiopharm Ulm"),
-
     ("Rostock Seawolves", "Science City Jena"),
-
     ("VET-CONCEPT Gladiators Trier", "EWE Baskets Oldenburg"),
-
     ("BB Löwen Braunschweig", "MHP RIESEN Ludwigsburg"),
-
     ("BMA365 Bamberg Baskets", "Veolia Towers Hamburg"),
-
     ("Bayern München", "SC RASTA Vechta"),
-
     ("Alba Berlin", "Chemnitz 99ers"),
-
     ("MLP Academics Heidelberg", "SYNTAINICS MBC"),
-
-
     ("Chemnitz 99ers", "Skyliners Frankfurt"),
-
     ("MHP RIESEN Ludwigsburg", "Bayern München"),
-
     ("ratiopharm Ulm", "Alba Berlin"),
-
     ("Veolia Towers Hamburg", "Fitness First Würzburg Baskets"),
-
     ("Science City Jena", "MLP Academics Heidelberg"),
-
     ("SYNTAINICS MBC", "BMA365 Bamberg Baskets"),
-
     ("SC RASTA Vechta", "Rostock Seawolves"),
-
     ("Telekom Baskets Bonn", "VET-CONCEPT Gladiators Trier"),
-
     ("EWE Baskets Oldenburg", "BB Löwen Braunschweig"),
-
-
     ("Alba Berlin", "Science City Jena"),
-
     ("Fitness First Würzburg Baskets", "MHP RIESEN Ludwigsburg"),
-
     ("BMA365 Bamberg Baskets", "Telekom Baskets Bonn"),
-
     ("MLP Academics Heidelberg", "SC RASTA Vechta"),
-
     ("BB Löwen Braunschweig", "Chemnitz 99ers"),
-
     ("Rostock Seawolves", "Veolia Towers Hamburg"),
-
     ("Skyliners Frankfurt", "ratiopharm Ulm"),
-
     ("VET-CONCEPT Gladiators Trier", "SYNTAINICS MBC"),
-
     ("Bayern München", "EWE Baskets Oldenburg"),
     ("Bayern München", "Science City Jena", 93, 77),
     ("BB Löwen Braunschweig", "BMA365 Bamberg Baskets", 75, 98),
