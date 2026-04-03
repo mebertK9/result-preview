@@ -1,21 +1,153 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Basketball Stats</title>
     <style>
-        body { font-family: Arial; margin: 20px; }
-        table { border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 8px; border: 1px solid #ddd; }
-        th { background: #f5f5f5; }
-        input[type=number] { width: 55px; padding: 4px; }
-        .hypo-row { background: #fffbe6; }
-        .compare-row { background: #ddeeff; }
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 12px;
+            max-width: 900px;
+            font-size: 15px;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 20px 0 8px;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 4px;
+        }
+
+        /* ---- Team-Auswahl ---- */
+        .team-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .team-grid label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f9f9f9;
+            cursor: pointer;
+            font-size: 0.9rem;
+            min-height: 40px;
+        }
+
+        .team-grid label:has(input:checked) {
+            background: #ddeeff;
+            border-color: #88aadd;
+            font-weight: bold;
+        }
+
+        .team-grid input[type=checkbox] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* ---- Tabellen ---- */
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 8px 0 16px;
+            width: 100%;
+            min-width: 420px;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        td { font-size: 0.9rem; }
+
+        /* ---- Farben ---- */
+        .hypo-row  { background: #fffbe6; }
+        .compare-row  { background: #ddeeff; }
         .compare-game { background: #ddeeff; }
         .hypo-compare { background: #cce8cc; }
-        .btn-clear { color: #c00; text-decoration: none; margin-left: 8px; font-size: 0.85em; }
-        .btn-set { padding: 3px 8px; cursor: pointer; }
         .bold { font-weight: bold; }
+
+        /* ---- DV-Checkbox in Tabelle ---- */
+        .dv-check {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        /* ---- Score-Eingabe ---- */
+        .score-form {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: nowrap;
+        }
+
+        .score-form input[type=number] {
+            width: 60px;
+            padding: 6px 4px;
+            font-size: 1rem;
+            text-align: center;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+        }
+
+        .score-sep {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .btn-set {
+            padding: 6px 12px;
+            font-size: 1rem;
+            min-height: 36px;
+            cursor: pointer;
+            background: #4a8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .btn-clear {
+            color: #c00;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 4px 6px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* ---- Mobile Anpassungen ---- */
+        @media (max-width: 600px) {
+            body { padding: 8px; font-size: 14px; }
+            h2 { font-size: 1rem; }
+            th { font-size: 0.75rem; padding: 6px 6px; }
+            td { font-size: 0.85rem; padding: 6px 6px; }
+            .team-grid label { font-size: 0.85rem; padding: 5px 8px; }
+            .score-form input[type=number] { width: 52px; }
+        }
     </style>
 </head>
 <body>
@@ -25,14 +157,16 @@
         {% for t in compare_teams %}
         <input type="hidden" name="compare" value="{{t}}">
         {% endfor %}
+        <div class="team-grid">
         {% for name in all_team_names %}
-        <label style="display: inline-block; margin-right: 15px;">
+        <label>
             <input type="checkbox" name="teams" value="{{name}}"
                    {% if name in selected_teams %}checked{% endif %}
                    onchange="this.form.submit()">
             {{name}}
         </label>
         {% endfor %}
+        </div>
     </form>
 
     <h2>Gesamttabelle</h2>
@@ -40,16 +174,17 @@
         {% for t in selected_teams %}
         <input type="hidden" name="teams" value="{{t}}">
         {% endfor %}
+        <div class="table-wrap">
         <table>
             <tr>
                 <th>#</th>
                 <th>Team</th>
-                <th>Spiele</th>
-                <th>Siege</th>
-                <th>Punkte</th>
-                <th>Körbe</th>
-                <th>Gegenkörbe</th>
-                <th>Differenz</th>
+                <th>Sp</th>
+                <th>S</th>
+                <th>Pkt</th>
+                <th>K+</th>
+                <th>K−</th>
+                <th>Diff</th>
                 <th title="Direkter Vergleich">DV</th>
             </tr>
             {% for name, stats in full_standings %}
@@ -65,27 +200,29 @@
                 <td>{{stats.against}}</td>
                 <td>{{stats.point_diff()}}</td>
                 <td style="text-align:center">
-                    <input type="checkbox" name="compare" value="{{name.name}}"
+                    <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
                            {% if in_compare %}checked{% endif %}
                            onchange="this.form.submit()">
                 </td>
             </tr>
             {% endfor %}
         </table>
+        </div>
     </form>
 
     {% if direct_standings %}
     <h2>Direkter Vergleich</h2>
+    <div class="table-wrap">
     <table>
         <tr>
             <th>#</th>
             <th>Team</th>
-            <th>Spiele</th>
-            <th>Siege</th>
-            <th>Punkte</th>
-            <th>Körbe</th>
-            <th>Gegenkörbe</th>
-            <th>Differenz</th>
+            <th>Sp</th>
+            <th>S</th>
+            <th>Pkt</th>
+            <th>K+</th>
+            <th>K−</th>
+            <th>Diff</th>
         </tr>
         {% for name, stats in direct_standings %}
         <tr>
@@ -100,14 +237,16 @@
         </tr>
         {% endfor %}
     </table>
+    </div>
     {% endif %}
 
     <h2>Ausstehende Spiele</h2>
+    <div class="table-wrap">
     <table>
         <tr>
             <th>Team 1</th>
             <th>Team 2</th>
-            <th>Ergebnis (Was wäre wenn?)</th>
+            <th>Was wäre wenn?</th>
         </tr>
         {% for idx, game, is_compare in visible_pending %}
         {% set has_hypo = idx in hypothetical %}
@@ -115,12 +254,12 @@
             <td class="{% if game[0] in selected_teams %}bold{% endif %}">{{game[0]}}</td>
             <td class="{% if game[1] in selected_teams %}bold{% endif %}">{{game[1]}}</td>
             <td>
-                <form method="POST" action="/set_score/{{idx}}" style="display:inline; margin:0;">
-                    <input type="number" name="score1"
+                <form class="score-form" method="POST" action="/set_score/{{idx}}">
+                    <input type="number" name="score1" inputmode="numeric"
                            value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}"
                            placeholder="–">
-                    :
-                    <input type="number" name="score2"
+                    <span class="score-sep">:</span>
+                    <input type="number" name="score2" inputmode="numeric"
                            value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}"
                            placeholder="–">
                     <button type="submit" class="btn-set">✓</button>
@@ -132,8 +271,10 @@
         </tr>
         {% endfor %}
     </table>
+    </div>
 
     <h2>Gespielte Spiele</h2>
+    <div class="table-wrap">
     <table>
         <tr>
             <th>Team 1</th>
@@ -148,6 +289,7 @@
         </tr>
         {% endfor %}
     </table>
+    </div>
 
 </body>
 </html>
