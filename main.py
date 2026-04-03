@@ -2,7 +2,7 @@ from collections import defaultdict
 from flask import Flask, render_template, request, redirect
 from models.team import Team
 from models.team_stats import TeamStats
-from data.games import games
+from data.games import saison_25_26
 
 app = Flask(__name__)
 
@@ -16,7 +16,7 @@ def get_team(name):
 
 def process_games():
     teams.clear()
-    for t1, t2, p1, p2 in games:
+    for t1, t2, p1, p2 in saison_25_26:
         t1 = get_team(t1)
         t2 = get_team(t2)
         if t1.calculate and t2.calculate:
@@ -43,7 +43,7 @@ def home():
         edit_id = None
 
     all_teams = sorted(set(
-        get_team(team) for game in games for team in [game[0], game[1]]),
+        get_team(team) for game in saison_25_26 for team in [game[0], game[1]]),
                        key=lambda t: t.name)
     selected_teams = request.args.getlist('teams')
     for team in all_teams:
@@ -57,7 +57,7 @@ def home():
                      if team.name in selected_teams]
 
     return render_template('index.html',
-                          games=games,
+                          games=saison_25_26,
                           standings=standings,
                           edit_id=edit_id,
                           all_teams=all_teams,
@@ -69,7 +69,7 @@ def add_game():
     team2 = request.form['team2']
     score1 = int(request.form['score1'])
     score2 = int(request.form['score2'])
-    games.append((team1, team2, score1, score2))
+    saison_25_26.append((team1, team2, score1, score2))
     return redirect('/')
 
 @app.route('/edit_game/<int:game_index>', methods=['POST'])
@@ -78,12 +78,12 @@ def edit_game(game_index):
     team2 = request.form['team2']
     score1 = int(request.form['score1'])
     score2 = int(request.form['score2'])
-    games[game_index] = (team1, team2, score1, score2)
+    saison_25_26[game_index] = (team1, team2, score1, score2)
     return redirect('/')
 
 @app.route('/delete_game/<int:game_index>')
 def delete_game(game_index):
-    del games[game_index]
+    del saison_25_26[game_index]
     return redirect('/')
 
 if __name__ == "__main__":

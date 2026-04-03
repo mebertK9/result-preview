@@ -1,5 +1,7 @@
 
-games = [("EWE Baskets Oldenburg", "MLP Academics Heidelberg", 105, 82),
+saison_25_26 = []
+
+saison_24_25 = [("EWE Baskets Oldenburg", "MLP Academics Heidelberg", 105, 82),
          ("BG Göttingen", "Skyliners Frankfurt", 72, 100),
          ("Bamberg Baskets", "BB Löwen Braunschweig", 77, 96),
          ("SYNTAINICS MBC", "Rostock Seawolves", 84, 87),
