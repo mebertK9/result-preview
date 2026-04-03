@@ -298,18 +298,26 @@
 
 
 <script>
-    // Scroll-Position vor dem Speichern merken, nach Reload wiederherstellen
+    // Scroll-Position merken und nach Reload wiederherstellen
     (function () {
         var savedY = sessionStorage.getItem('scrollY');
         if (savedY !== null) {
             window.scrollTo(0, parseInt(savedY, 10));
             sessionStorage.removeItem('scrollY');
         }
+        function saveScroll() {
+            sessionStorage.setItem('scrollY', window.scrollY);
+        }
         document.querySelectorAll('.score-form').forEach(function (form) {
-            form.addEventListener('submit', function () {
-                sessionStorage.setItem('scrollY', window.scrollY);
-            });
+            form.addEventListener('submit', saveScroll);
         });
+        document.querySelectorAll('.btn-clear').forEach(function (link) {
+            link.addEventListener('click', saveScroll);
+        });
+        var compareForm = document.getElementById('compareForm');
+        if (compareForm) {
+            compareForm.addEventListener('submit', saveScroll);
+        }
     })();
 </script>
 </body>
