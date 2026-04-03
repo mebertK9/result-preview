@@ -8,24 +8,19 @@
         table { border-collapse: collapse; margin: 20px 0; }
         th, td { padding: 8px; border: 1px solid #ddd; }
         form { margin: 20px 0; }
-        input { margin: 5px; padding: 5px; }
+        input[type=number] { width: 55px; padding: 4px; }
+        .hypo-row { background: #fffbe6; }
+        .btn-clear { color: #c00; text-decoration: none; margin-left: 8px; font-size: 0.85em; }
+        .btn-set { padding: 3px 8px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <h2>Add New Game</h2>
-    <form method="POST" action="/add_game">
-        <input name="team1" placeholder="Team 1" required>
-        <input name="team2" placeholder="Team 2" required>
-        <input name="score1" type="number" placeholder="Score Team 1" required>
-        <input name="score2" type="number" placeholder="Score Team 2" required>
-        <input type="submit" value="Add Game">
-    </form>
 
     <h2>Teams</h2>
     <form method="GET" id="teamFilter">
         {% for team in all_teams %}
         <label style="display: inline-block; margin-right: 15px;">
-            <input type="checkbox" name="teams" value="{{team.name}}" 
+            <input type="checkbox" name="teams" value="{{team.name}}"
                    {% if not selected_teams or team.name in selected_teams %}checked{% endif %}
                    onchange="this.form.submit()">
             {{team}}
@@ -36,6 +31,7 @@
     <h2>Current Standings</h2>
     <table>
         <tr>
+            <th>#</th>
             <th>Team</th>
             <th>Games</th>
             <th>Wins</th>
@@ -46,6 +42,7 @@
         </tr>
         {% for name, stats in standings %}
         <tr>
+            <td>{{loop.index}}</td>
             <td>{{name}}</td>
             <td>{{stats.games}}</td>
             <td>{{stats.wins}}</td>
@@ -57,37 +54,52 @@
         {% endfor %}
     </table>
 
-    <h2>Games</h2>
+    <h2>Ausstehende Spiele</h2>
     <table>
         <tr>
             <th>Team 1</th>
             <th>Team 2</th>
-            <th>Score</th>
-            <th>Actions</th>
+            <th>Ergebnis (Was wäre wenn?)</th>
         </tr>
-        {% for game in games %}
-        <tr id="game{{loop.index0}}">
-            {% if edit_id == loop.index0 %}
-            <td colspan="3">
-                <form method="POST" action="/edit_game/{{loop.index0}}" style="margin:0">
-                    <input name="team1" value="{{game[0]}}" required>
-                    <input name="team2" value="{{game[1]}}" required>
-                    <input name="score1" type="number" value="{{game[2]}}" required>
-                    <input name="score2" type="number" value="{{game[3]}}" required>
-                    <input type="submit" value="Save">
-                </form>
-            </td>
-            {% else %}
+        {% for game in pending_games %}
+        {% set idx = loop.index0 %}
+        <tr {% if idx in hypothetical %}class="hypo-row"{% endif %}>
             <td>{{game[0]}}</td>
             <td>{{game[1]}}</td>
-            <td>{{game[2]}} - {{game[3]}}</td>
-            {% endif %}
             <td>
-                <a href="/?edit={{loop.index0}}" class="edit">Edit</a>
-                <a href="/delete_game/{{loop.index0}}" class="delete">Delete</a>
+                <form method="POST" action="/set_score/{{idx}}" style="display:inline; margin:0;">
+                    <input type="number" name="score1"
+                           value="{% if idx in hypothetical %}{{hypothetical[idx][0]}}{% endif %}"
+                           placeholder="–">
+                    :
+                    <input type="number" name="score2"
+                           value="{% if idx in hypothetical %}{{hypothetical[idx][1]}}{% endif %}"
+                           placeholder="–">
+                    <button type="submit" class="btn-set">✓</button>
+                </form>
+                {% if idx in hypothetical %}
+                <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
     </table>
+
+    <h2>Gespielte Spiele</h2>
+    <table>
+        <tr>
+            <th>Team 1</th>
+            <th>Team 2</th>
+            <th>Ergebnis</th>
+        </tr>
+        {% for game in completed_games %}
+        <tr>
+            <td>{{game[0]}}</td>
+            <td>{{game[1]}}</td>
+            <td>{{game[2]}} : {{game[3]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
 </body>
 </html>

@@ -9,6 +9,11 @@ app = Flask(__name__)
 name_to_team = {}
 teams = defaultdict(TeamStats)
 
+completed_games = [g for g in saison_25_26 if len(g) == 4]
+pending_games = [g for g in saison_25_26 if len(g) == 2]
+
+hypothetical = {}  # {index_in_pending_games: (score1, score2)}
+
 def get_team(name):
     if name not in name_to_team:
         name_to_team[name] = Team(name)
@@ -16,14 +21,23 @@ def get_team(name):
 
 def process_games():
     teams.clear()
-    for t1, t2, p1, p2 in saison_25_26:
+    for t1, t2, p1, p2 in completed_games:
         t1 = get_team(t1)
         t2 = get_team(t2)
         if t1.calculate and t2.calculate:
             win1 = p1 > p2
-            win2 = not win1
             teams[t1].record_game(p1, p2, t2, win1)
-            teams[t2].record_game(p2, p1, t1, win2)
+            teams[t2].record_game(p2, p1, t1, not win1)
+
+    for idx, (t1, t2) in enumerate(pending_games):
+        if idx in hypothetical:
+            p1, p2 = hypothetical[idx]
+            t1 = get_team(t1)
+            t2 = get_team(t2)
+            if t1.calculate and t2.calculate:
+                win1 = p1 > p2
+                teams[t1].record_game(p1, p2, t2, win1)
+                teams[t2].record_game(p2, p1, t1, not win1)
 
 def get_sorted_teams():
     return sorted(teams.items(),
@@ -59,33 +73,27 @@ def home():
                      if team.name in selected_teams]
 
     return render_template('index.html',
-                          games=saison_25_26,
+                          completed_games=completed_games,
+                          pending_games=pending_games,
+                          hypothetical=hypothetical,
                           standings=standings,
                           edit_id=edit_id,
                           all_teams=all_teams,
                           selected_teams=selected_teams)
 
-@app.route('/add_game', methods=['POST'])
-def add_game():
-    team1 = request.form['team1']
-    team2 = request.form['team2']
-    score1 = int(request.form['score1'])
-    score2 = int(request.form['score2'])
-    saison_25_26.append((team1, team2, score1, score2))
+@app.route('/set_score/<int:idx>', methods=['POST'])
+def set_score(idx):
+    score1 = request.form.get('score1', '').strip()
+    score2 = request.form.get('score2', '').strip()
+    if score1 and score2:
+        hypothetical[idx] = (int(score1), int(score2))
+    else:
+        hypothetical.pop(idx, None)
     return redirect('/')
 
-@app.route('/edit_game/<int:game_index>', methods=['POST'])
-def edit_game(game_index):
-    team1 = request.form['team1']
-    team2 = request.form['team2']
-    score1 = int(request.form['score1'])
-    score2 = int(request.form['score2'])
-    saison_25_26[game_index] = (team1, team2, score1, score2)
-    return redirect('/')
-
-@app.route('/delete_game/<int:game_index>')
-def delete_game(game_index):
-    del saison_25_26[game_index]
+@app.route('/clear_score/<int:idx>')
+def clear_score(idx):
+    hypothetical.pop(idx, None)
     return redirect('/')
 
 if __name__ == "__main__":
