@@ -7,41 +7,59 @@
         body { font-family: Arial; margin: 20px; }
         table { border-collapse: collapse; margin: 20px 0; }
         th, td { padding: 8px; border: 1px solid #ddd; }
-        form { margin: 20px 0; }
+        th { background: #f5f5f5; }
         input[type=number] { width: 55px; padding: 4px; }
         .hypo-row { background: #fffbe6; }
         .btn-clear { color: #c00; text-decoration: none; margin-left: 8px; font-size: 0.85em; }
         .btn-set { padding: 3px 8px; cursor: pointer; }
+        .switch-bar { margin: 10px 0 20px; }
+        .switch-bar label { font-weight: bold; cursor: pointer; }
+        h3 { margin-top: 30px; color: #444; }
     </style>
 </head>
 <body>
 
     <h2>Teams</h2>
     <form method="GET" id="teamFilter">
-        {% for team in all_teams %}
+        {% if direct_compare %}
+        <input type="hidden" name="direct_compare" value="1">
+        {% endif %}
+        {% for name in all_teams %}
         <label style="display: inline-block; margin-right: 15px;">
-            <input type="checkbox" name="teams" value="{{team.name}}"
-                   {% if not selected_teams or team.name in selected_teams %}checked{% endif %}
+            <input type="checkbox" name="teams" value="{{name}}"
+                   {% if name in selected_teams %}checked{% endif %}
                    onchange="this.form.submit()">
-            {{team}}
+            {{name}}
         </label>
         {% endfor %}
     </form>
 
-    <h2>Current Standings</h2>
+    <div class="switch-bar">
+        {% if direct_compare %}
+            <a href="?{% for t in selected_teams %}teams={{t|urlencode}}&{% endfor %}direct_compare=0">
+                ☑ Direkter Vergleich — klicken zum Deaktivieren
+            </a>
+        {% else %}
+            <a href="?{% for t in selected_teams %}teams={{t|urlencode}}&{% endfor %}direct_compare=1">
+                ☐ Direkter Vergleich aktivieren
+            </a>
+        {% endif %}
+    </div>
+
+    <h2>Gesamttabelle</h2>
     <table>
         <tr>
             <th>#</th>
             <th>Team</th>
-            <th>Games</th>
-            <th>Wins</th>
+            <th>Spiele</th>
+            <th>Siege</th>
             <th>Punkte</th>
-            <th>Points</th>
-            <th>Against</th>
-            <th>Difference</th>
+            <th>Körbe</th>
+            <th>Gegenkörbe</th>
+            <th>Differenz</th>
         </tr>
-        {% for name, stats in standings %}
-        <tr>
+        {% for name, stats in full_standings %}
+        <tr {% if name.name in selected_teams %}style="font-weight:bold"{% endif %}>
             <td>{{loop.index}}</td>
             <td>{{name}}</td>
             <td>{{stats.games}}</td>
@@ -54,6 +72,34 @@
         {% endfor %}
     </table>
 
+    {% if direct_compare and direct_standings %}
+    <h2>Direkter Vergleich (ausgewählte Teams)</h2>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Spiele</th>
+            <th>Siege</th>
+            <th>Punkte</th>
+            <th>Körbe</th>
+            <th>Gegenkörbe</th>
+            <th>Differenz</th>
+        </tr>
+        {% for name, stats in direct_standings %}
+        <tr>
+            <td>{{loop.index}}</td>
+            <td>{{name}}</td>
+            <td>{{stats.games}}</td>
+            <td>{{stats.wins}}</td>
+            <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+            <td>{{stats.points}}</td>
+            <td>{{stats.against}}</td>
+            <td>{{stats.point_diff()}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
     <h2>Ausstehende Spiele</h2>
     <table>
         <tr>
@@ -61,11 +107,10 @@
             <th>Team 2</th>
             <th>Ergebnis (Was wäre wenn?)</th>
         </tr>
-        {% for game in pending_games %}
-        {% set idx = loop.index0 %}
+        {% for idx, game in visible_pending %}
         <tr {% if idx in hypothetical %}class="hypo-row"{% endif %}>
-            <td>{{game[0]}}</td>
-            <td>{{game[1]}}</td>
+            <td {% if game[0] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[0]}}</td>
+            <td {% if game[1] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[1]}}</td>
             <td>
                 <form method="POST" action="/set_score/{{idx}}" style="display:inline; margin:0;">
                     <input type="number" name="score1"
@@ -92,10 +137,10 @@
             <th>Team 2</th>
             <th>Ergebnis</th>
         </tr>
-        {% for game in completed_games %}
+        {% for game in visible_completed %}
         <tr>
-            <td>{{game[0]}}</td>
-            <td>{{game[1]}}</td>
+            <td {% if game[0] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[0]}}</td>
+            <td {% if game[1] in selected_teams %}style="font-weight:bold"{% endif %}>{{game[1]}}</td>
             <td>{{game[2]}} : {{game[3]}}</td>
         </tr>
         {% endfor %}
