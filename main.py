@@ -51,7 +51,8 @@ def get_team(name):
         name_to_team[name] = Team(name)
     return name_to_team[name]
 
-def compute_standings(filter_teams=None):
+def _build_stats(filter_teams=None):
+    """Compute raw TeamStats dict, optionally restricted to games between filter_teams."""
     teams = defaultdict(TeamStats)
 
     all_games = list(completed_games)
@@ -70,15 +71,63 @@ def compute_standings(filter_teams=None):
         teams[t1_obj].record_game(p1, p2, t2_obj, win1)
         teams[t2_obj].record_game(p2, p1, t1_obj, not win1)
 
-    return sorted(teams.items(),
-                  key=lambda x: (
-                      -x[1].plus_points(),
-                      -x[1].opponents[x[0]][0],
-                      -(x[1].opponents[x[0]][2] - x[1].opponents[x[0]][3]),
-                      -x[1].opponents[x[0]][2],
-                      -x[1].point_diff(),
-                      -x[1].points,
-                  ))
+    return teams
+
+
+def _sort_key_simple(stats):
+    """Sort key for a table where stats already represent the relevant games."""
+    return (-stats.plus_points(), -stats.point_diff(), -stats.points)
+
+
+def compute_standings(filter_teams=None):
+    """Return sorted standings list.
+
+    For the full table: teams tied on plus_points are broken by a
+    head-to-head mini-table among exactly those tied teams, then by
+    overall point_diff / overall points.
+
+    For a filtered table (DV): the passed-in stats already represent
+    only h2h games, so a simple sort suffices.
+    """
+    full_stats = _build_stats(filter_teams)
+
+    if filter_teams is not None:
+        # DV table: stats are already h2h-only → simple sort
+        return sorted(full_stats.items(), key=lambda x: _sort_key_simple(x[1]))
+
+    # Full table: proper tiebreaking
+    items = list(full_stats.items())
+
+    # Group by plus_points
+    groups = {}
+    for team, stats in items:
+        pts = stats.plus_points()
+        groups.setdefault(pts, []).append((team, stats))
+
+    result = []
+    for pts in sorted(groups.keys(), reverse=True):
+        group = groups[pts]
+        if len(group) == 1:
+            result.extend(group)
+        else:
+            # Compute h2h mini-table restricted to this tied group
+            group_names = {team.name for team, _ in group}
+            h2h_stats = _build_stats(filter_teams=group_names)
+
+            def tiebreak_key(item):
+                team, full = item
+                h2h = h2h_stats.get(team, TeamStats())
+                return (
+                    -h2h.plus_points(),
+                    -h2h.point_diff(),
+                    -h2h.points,
+                    -full.point_diff(),
+                    -full.points,
+                )
+
+            result.extend(sorted(group, key=tiebreak_key))
+
+    return result
 
 @app.route('/')
 def home():
