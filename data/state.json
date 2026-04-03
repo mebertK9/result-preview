@@ -1,8 +1,15 @@
 {
-  "hypothetical": {},
+  "hypothetical": {
+    "4": [
+      80,
+      90
+    ]
+  },
   "selected_teams": [
-    "Alba Berlin",
-    "Bayern München"
+    "BB Löwen Braunschweig",
+    "MLP Academics Heidelberg",
+    "SYNTAINICS MBC",
+    "Science City Jena"
   ],
   "compare_teams": []
 }

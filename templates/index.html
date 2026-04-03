@@ -291,5 +291,21 @@
     </table>
     </div>
 
+
+<script>
+    // Scroll-Position vor dem Speichern merken, nach Reload wiederherstellen
+    (function () {
+        var savedY = sessionStorage.getItem('scrollY');
+        if (savedY !== null) {
+            window.scrollTo(0, parseInt(savedY, 10));
+            sessionStorage.removeItem('scrollY');
+        }
+        document.querySelectorAll('.score-form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                sessionStorage.setItem('scrollY', window.scrollY);
+            });
+        });
+    })();
+</script>
 </body>
 </html>
