@@ -314,10 +314,9 @@
         document.querySelectorAll('.btn-clear').forEach(function (link) {
             link.addEventListener('click', saveScroll);
         });
-        var compareForm = document.getElementById('compareForm');
-        if (compareForm) {
-            compareForm.addEventListener('submit', saveScroll);
-        }
+        document.querySelectorAll('.dv-check').forEach(function (cb) {
+            cb.addEventListener('change', saveScroll);
+        });
     })();
 </script>
 </body>

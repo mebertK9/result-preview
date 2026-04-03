@@ -1,24 +1,20 @@
 {
   "hypothetical": {
-    "22": [
-      80,
-      87
-    ],
-    "32": [
-      65,
-      70
-    ],
-    "44": [
-      80,
-      75
-    ],
     "57": [
       90,
       91
     ]
   },
   "selected_teams": [
-    "BB Löwen Braunschweig"
+    "BB Löwen Braunschweig",
+    "SYNTAINICS MBC",
+    "Skyliners Frankfurt",
+    "ratiopharm Ulm"
   ],
-  "compare_teams": []
+  "compare_teams": [
+    "BMA365 Bamberg Baskets",
+    "MLP Academics Heidelberg",
+    "Science City Jena",
+    "Telekom Baskets Bonn"
+  ]
 }
