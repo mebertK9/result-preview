@@ -28,8 +28,10 @@ def process_games():
 def get_sorted_teams():
     return sorted(teams.items(),
                   key=lambda x: (
-                      -x[1].win_pct(),
+                      -x[1].plus_points(),
                       -x[1].opponents[x[0]][0],
+                      -(x[1].opponents[x[0]][2] - x[1].opponents[x[0]][3]),
+                      -x[1].opponents[x[0]][2],
                       -x[1].point_diff(),
                       -x[1].points,
                   ))
