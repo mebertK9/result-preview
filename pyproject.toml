@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bbl-standings"
+name = "result-preview"
 version = "0.1.0"
 description = "BBL-Tabellenkalkulator – Ergebnisse eintragen und Tabellen live simulieren"
 readme = "README.md"
@@ -26,10 +26,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mahjongskroenung/bbl-standings"
+Homepage = "https://github.com/mebertK9/result-preview"
+Repository = "https://github.com/mebertK9/result-preview"
 
 [project.scripts]
-bbl-standings = "result_preview.main:app.run"
+result-preview = "result_preview.main:app.run"
 
 [tool.hatch.build.targets.wheel]
 packages = ["result_preview"]
