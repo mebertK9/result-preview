@@ -29,8 +29,5 @@ classifiers = [
 Homepage = "https://github.com/mebertK9/result-preview"
 Repository = "https://github.com/mebertK9/result-preview"
 
-[project.scripts]
-result-preview = "result_preview.main:app.run"
-
 [tool.hatch.build.targets.wheel]
 packages = ["result_preview"]
