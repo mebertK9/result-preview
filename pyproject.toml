@@ -1,7 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
-name = "python-template"
+name = "result-preview"
 version = "0.1.0"
-description = ""
+description = "A Python web application for result preview"
 authors = [
     {name = "Matthias Ebert", email = "mahjongskroenung@gmail.com"}
 ]
@@ -9,3 +13,6 @@ requires-python = ">=3.11"
 dependencies = [
     "flask>=3.1.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["result_preview"]
