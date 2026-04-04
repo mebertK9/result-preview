@@ -3,7 +3,7 @@ saison_25_26 = [
     ("Veolia Towers Hamburg", "Rostock Seawolves"),
     ("Bayern München", "Rostock Seawolves"),
     ("Chemnitz 99ers", "ratiopharm Ulm"),
-    ("BB Löwen Braunschweig", "ratiopharm Ulm"),
+    ("BB Löwen Braunschweig", "ratiopharm Ulm", 77, 67),
     ("SYNTAINICS MBC", "Bayern München"),
     ("Fitness First Würzburg Baskets", "SC RASTA Vechta"),
     ("Chemnitz 99ers", "Telekom Baskets Bonn"),
