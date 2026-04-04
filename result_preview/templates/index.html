@@ -141,6 +141,19 @@
             align-items: center;
         }
 
+        .btn-finalize {
+            color: #555;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 4px 6px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .btn-finalize:hover { color: #c60; }
+
         /* ---- Mobile Anpassungen ---- */
         @media (max-width: 600px) {
             body { padding: 8px; font-size: 14px; }
@@ -271,6 +284,9 @@
                 </form>
                 {% if has_hypo %}
                 <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
+                <a href="/finalize/{{idx}}" class="btn-finalize"
+                   title="Spiel festschreiben (nicht revidierbar)"
+                   onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
                 {% endif %}
             </td>
         </tr>
@@ -311,7 +327,7 @@
         document.querySelectorAll('.score-form').forEach(function (form) {
             form.addEventListener('submit', saveScroll);
         });
-        document.querySelectorAll('.btn-clear').forEach(function (link) {
+        document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
             link.addEventListener('click', saveScroll);
         });
         document.querySelectorAll('.dv-check').forEach(function (cb) {
