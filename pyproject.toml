@@ -3,9 +3,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "result-preview"
+name = "bbl-standings"
 version = "0.1.0"
-description = "A Python web application for result preview"
+description = "BBL-Tabellenkalkulator – Ergebnisse eintragen und Tabellen live simulieren"
+readme = "README.md"
+license = { text = "MIT" }
 authors = [
     {name = "Matthias Ebert", email = "mahjongskroenung@gmail.com"}
 ]
@@ -13,6 +15,21 @@ requires-python = ">=3.11"
 dependencies = [
     "flask>=3.1.0",
 ]
+keywords = ["basketball", "bbl", "standings", "simulator", "flask"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Framework :: Flask",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+]
+
+[project.urls]
+Homepage = "https://github.com/mahjongskroenung/bbl-standings"
+
+[project.scripts]
+bbl-standings = "result_preview.main:app.run"
 
 [tool.hatch.build.targets.wheel]
 packages = ["result_preview"]
