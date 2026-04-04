@@ -2,19 +2,15 @@
   "hypothetical": {
     "18": [
       80,
-      81
+      86
     ],
     "53": [
       90,
       111
     ],
-    "14": [
-      80,
-      90
-    ],
     "23": [
       90,
-      60
+      80
     ],
     "28": [
       88,
@@ -38,7 +34,7 @@
     ],
     "9": [
       93,
-      91
+      94
     ],
     "49": [
       90,
@@ -63,11 +59,14 @@
     "1": [
       80,
       78
+    ],
+    "32": [
+      90,
+      80
     ]
   },
   "selected_teams": [
-    "SYNTAINICS MBC",
-    "Veolia Towers Hamburg"
+    "Science City Jena"
   ],
   "compare_teams": [
     "BB Löwen Braunschweig",
