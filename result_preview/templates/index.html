@@ -193,6 +193,8 @@
         <table>
             <tr>
                 <th>#</th>
+                <th title="Direkter Vergleich">DV</th>
+            
                 <th>Team</th>
                 <th>Sp</th>
                 <th>S</th>
@@ -200,7 +202,6 @@
                 <th>K+</th>
                 <th>K−</th>
                 <th>Diff</th>
-                <th title="Direkter Vergleich">DV</th>
             </tr>
             {% for name, stats in full_standings %}
             {% set in_compare = name.name in compare_teams %}
@@ -208,6 +209,11 @@
             {% set hcount = hypo_count.get(name.name, 0) %}
             <tr class="{% if in_compare %}compare-row{% elif hcount %}hypo-team{% endif %}">
                 <td>{{loop.index}}</td>
+                <td style="text-align:center">
+                    <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
+                           {% if in_compare %}checked{% endif %}
+                           onchange="this.form.submit()">
+                </td>
                 <td class="{% if in_selected %}bold{% endif %}">
                     {{name}}{% if hcount %} <span class="hypo-badge">({{hcount}})</span>{% endif %}
                 </td>
@@ -217,11 +223,7 @@
                 <td>{{stats.points}}</td>
                 <td>{{stats.against}}</td>
                 <td>{{stats.point_diff()}}</td>
-                <td style="text-align:center">
-                    <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
-                           {% if in_compare %}checked{% endif %}
-                           onchange="this.form.submit()">
-                </td>
+                
             </tr>
             {% endfor %}
         </table>
