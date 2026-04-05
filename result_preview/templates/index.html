@@ -22,7 +22,7 @@
             padding-bottom: 4px;
         }
 
-        /* ---- Team-Auswahl ---- */
+        /* ---- Team selection ---- */
         .team-grid {
             display: flex;
             flex-wrap: wrap;
@@ -51,6 +51,327 @@
 
         .team-grid input[type=checkbox] {
             width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* ---- Tables ---- */
+        .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 8px 0 16px;
+            width: 100%;
+            /* No min-width: let tables shrink naturally on mobile */
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            white-space: nowrap; /* default: keep numbers/buttons on one line */
+        }
+
+        /* Team name cells may wrap to avoid horizontal scroll */
+        td.team-name {
+            white-space: normal;
+            word-break: break-word;
+            min-width: 60px;
+        }
+
+        th {
+            background: #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        td { font-size: 0.9rem; }
+
+        /* ---- Colors ---- */
+        .hypo-row     { background: #fffbe6; }
+        .hypo-team    { background: #e8e8e8; }
+        .hypo-badge   { color: #666; font-size: 0.82em; font-weight: normal; }
+        .compare-row  { background: #ddeeff; }
+        .compare-game { background: #ddeeff; }
+        .hypo-compare { background: #cce8cc; }
+        .bold { font-weight: bold; }
+
+        /* ---- DV checkbox in table ---- */
+        .dv-check {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        /* ---- Score input ---- */
+        .score-form {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: nowrap;
+        }
+
+        .score-form input[type=number] {
+            width: 60px;
+            padding: 6px 4px;
+            font-size: 1rem;
+            text-align: center;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+        }
+
+        .score-sep {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .btn-set {
+            padding: 6px 12px;
+            font-size: 1rem;
+            min-height: 36px;
+            cursor: pointer;
+            background: #4a8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .btn-clear {
+            color: #c00;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 4px 6px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-finalize {
+            color: #555;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 4px 6px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .btn-finalize:hover { color: #c60; }
+
+        /* ---- Mobile adjustments ---- */
+        @media (max-width: 600px) {
+            body { padding: 8px; font-size: 14px; }
+            h2 { font-size: 1rem; }
+            th { font-size: 0.72rem; padding: 5px 4px; }
+            td { font-size: 0.82rem; padding: 5px 4px; }
+            .team-grid label { font-size: 0.85rem; padding: 5px 8px; }
+            .score-form input[type=number] { width: 44px; font-size: 0.9rem; }
+            .btn-set { padding: 5px 8px; font-size: 0.9rem; }
+            .dv-check { width: 20px; height: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+{# ============================================================
+   SHORT NAME MAPPING
+   Add entries here for any team whose name is long.
+   Format:  "Full team name as stored in DB": "Short"
+   The short name is shown in all tables; the full name is used
+   in the team-filter grid (where there is more space).
+   ============================================================ #}
+{% set name_map = {
+    "Veolia Towers Hamburg": "Towers",
+    "BB Löwen Braunschweig":     "Löwen",
+    "MHP RIESEN Ludwigsburg": "Riesen",
+    "VET-CONCEPT Gladiators Trier": "Trier",
+    "BMA365 Bamberg Baskets": "Bamberg",
+    "Fitness First Würzburg Baskets": "Würzburg",
+    "Chemnitz 99ers": "99-ers",
+    "SYNTAINICS MBC": "MBC",
+    "Telekom Baskets Bonn": "Bonn",
+    "EWE Baskets Oldenburg": "EWE",
+    "SC RASTA Vechta": "RASTA",
+    "MLP Academics Heidelberg": "MLP"
+} %}
+
+{# Helper macro: returns short name if mapping exists, otherwise full name #}
+{% macro sn(full_name) %}{{ name_map.get(full_name, full_name) }}{% endmacro %}
+
+
+    <h2>Teams</h2>
+    <form method="GET" id="teamFilter">
+        {% for t in compare_teams %}
+        <input type="hidden" name="compare" value="{{t}}">
+        {% endfor %}
+        <div class="team-grid">
+        {% for name in all_team_names %}
+        <label>
+            <input type="checkbox" name="teams" value="{{name}}"
+                   {% if name in selected_teams %}checked{% endif %}
+                   onchange="this.form.submit()">
+            {{name}}
+        </label>
+        {% endfor %}
+        </div>
+    </form>
+
+    <h2>Gesamttabelle</h2>
+    <form method="GET" id="compareForm">
+        {% for t in selected_teams %}
+        <input type="hidden" name="teams" value="{{t}}">
+        {% endfor %}
+        <div class="table-wrap">
+        <table>
+            <tr>
+                <th>#</th>
+                <th title="Direkter Vergleich">DV</th>
+                <th>Team</th>
+                <th>Sp</th>
+                <th>S</th>
+                <th>Pkt</th>
+                <th>K+</th>
+                <th>K−</th>
+                <th>Diff</th>
+            </tr>
+            {% for name, stats in full_standings %}
+            {% set in_compare = name.name in compare_teams %}
+            {% set in_selected = name.name in selected_teams %}
+            {% set hcount = hypo_count.get(name.name, 0) %}
+            <tr class="{% if in_compare %}compare-row{% elif hcount %}hypo-team{% endif %}">
+                <td>{{loop.index}}</td>
+                <td style="text-align:center">
+                    <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
+                           {% if in_compare %}checked{% endif %}
+                           onchange="this.form.submit()">
+                </td>
+                <td class="team-name {% if in_selected %}bold{% endif %}">
+                    {{ sn(name.name) }}{% if hcount %} <span class="hypo-badge">({{hcount}})</span>{% endif %}
+                </td>
+                <td>{{stats.games}}</td>
+                <td>{{stats.wins}}</td>
+                <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+                <td>{{stats.points}}</td>
+                <td>{{stats.against}}</td>
+                <td>{{stats.point_diff()}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+    </form>
+
+    {% if direct_standings %}
+    <h2>Direkter Vergleich</h2>
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Sp</th>
+            <th>S</th>
+            <th>Pkt</th>
+            <th>K+</th>
+            <th>K−</th>
+            <th>Diff</th>
+        </tr>
+        {% for name, stats in direct_standings %}
+        <tr>
+            <td>{{loop.index}}</td>
+            <td class="team-name">{{ sn(name) }}</td>
+            <td>{{stats.games}}</td>
+            <td>{{stats.wins}}</td>
+            <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+            <td>{{stats.points}}</td>
+            <td>{{stats.against}}</td>
+            <td>{{stats.point_diff()}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+    {% endif %}
+
+    <h2>Ausstehende Spiele</h2>
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>Team 1</th>
+            <th>Team 2</th>
+            <th>Was wäre wenn?</th>
+        </tr>
+        {% for idx, game, is_compare in visible_pending %}
+        {% set has_hypo = idx in hypothetical %}
+        <tr class="{% if is_compare and has_hypo %}hypo-compare{% elif is_compare %}compare-game{% elif has_hypo %}hypo-row{% endif %}">
+            <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
+            <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
+            <td>
+                <form class="score-form" method="POST" action="/set_score/{{idx}}">
+                    <input type="number" name="score1" inputmode="numeric"
+                           value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}"
+                           placeholder="–">
+                    <span class="score-sep">:</span>
+                    <input type="number" name="score2" inputmode="numeric"
+                           value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}"
+                           placeholder="–">
+                    <button type="submit" class="btn-set">✓</button>
+                </form>
+                {% if has_hypo %}
+                <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
+                <a href="/finalize/{{idx}}" class="btn-finalize"
+                   title="Spiel festschreiben (nicht revidierbar)"
+                   onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+
+    <h2>Gespielte Spiele</h2>
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>Team 1</th>
+            <th>Team 2</th>
+            <th>Ergebnis</th>
+        </tr>
+        {% for game, is_compare in visible_completed %}
+        <tr {% if is_compare %}class="compare-game"{% endif %}>
+            <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
+            <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
+            <td>{{game[2]}} : {{game[3]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+
+
+<script>
+    // Remember scroll position and restore after reload
+    (function () {
+        var savedY = sessionStorage.getItem('scrollY');
+        if (savedY !== null) {
+            window.scrollTo(0, parseInt(savedY, 10));
+            sessionStorage.removeItem('scrollY');
+        }
+        function saveScroll() {
+            sessionStorage.setItem('scrollY', window.scrollY);
+        }
+        document.querySelectorAll('.score-form').forEach(function (form) {
+            form.addEventListener('submit', saveScroll);
+        });
+        document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
+            link.addEventListener('click', saveScroll);
+        });
+        document.querySelectorAll('.dv-check').forEach(function (cb) {
+            cb.addEventListener('change', saveScroll);
+        });
+    })();
+</script>
+</body>
+</html>
             height: 20px;
             cursor: pointer;
             flex-shrink: 0;
