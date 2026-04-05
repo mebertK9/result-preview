@@ -8,7 +8,7 @@ saison_25_26 = [
     ("Fitness First Würzburg Baskets", "SC RASTA Vechta", 86, 103),
     ("Chemnitz 99ers", "Telekom Baskets Bonn", 75, 76),
     ("MLP Academics Heidelberg", "Rostock Seawolves"),
-    ("Alba Berlin", "EWE Baskets Oldenburg"),
+    ("Alba Berlin", "EWE Baskets Oldenburg", 79, 81),
     ("Veolia Towers Hamburg", "Skyliners Frankfurt"),
     ("VET-CONCEPT Gladiators Trier", "MHP RIESEN Ludwigsburg"),
     ("BMA365 Bamberg Baskets", "Science City Jena"),
