@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: result-preview
-    runtime: python311
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn result_preview.main:app
