@@ -147,9 +147,33 @@ def compute_standings(filter_teams=None):
             result.extend(sorted(group, key=tiebreak_key))
     return result
 
-# ── Routen ────────────────────────────────────────────────────────────────────
+# ── Auth routes ───────────────────────────────────────────────────────────────
+ 
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        pw_hash = USERS.get(username)
+        if pw_hash and check_password_hash(pw_hash, password):
+            login_user(User(username), remember=True)
+            return redirect(url_for('home'))
+        error = "Benutzername oder Passwort falsch."
+    return render_template('login.html', error=error)
+ 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login_page'))
+ 
+# ── Main route ────────────────────────────────────────────────────────────────
 
 @app.route('/')
+@login_required
 def home():
     global saved_selected_teams, saved_compare_teams
     all_team_names = sorted(set(
@@ -207,6 +231,7 @@ def home():
                            visible_pending=visible_pending)
 
 @app.route('/set_score/<int:idx>', methods=['POST'])
+@login_required
 def set_score(idx):
     s1 = request.form.get('score1', '').strip()
     s2 = request.form.get('score2', '').strip()
@@ -218,12 +243,14 @@ def set_score(idx):
     return redirect(request.referrer or '/')
 
 @app.route('/clear_score/<int:idx>')
+@login_required
 def clear_score(idx):
     hypothetical.pop(idx, None)
     save_state(saved_selected_teams, saved_compare_teams)
     return redirect(request.referrer or '/')
 
 @app.route('/finalize/<int:idx>')
+@login_required
 def finalize_game(idx):
     """Schreibt eine Hypothese als echtes Ergebnis fest (nicht revidierbar über die App)."""
     if idx not in hypothetical or idx >= len(pending_games):
