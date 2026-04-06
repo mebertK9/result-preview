@@ -176,6 +176,12 @@
 </head>
 <body>
 
+<div style="text-align:right; font-size:0.82rem; color:#888; margin-bottom:6px;">
+    {{ current_user.id }}
+    &nbsp;·&nbsp;
+    <a href="/logout" style="color:#888;">Abmelden</a>
+</div>
+
 {# ============================================================
    SHORT NAME MAPPING
    Add entries here for any team whose name is long.
@@ -320,9 +326,11 @@
                 </form>
                 {% if has_hypo %}
                 <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
+                {% if is_admin %}
                 <a href="/finalize/{{idx}}" class="btn-finalize"
                    title="Spiel festschreiben (nicht revidierbar)"
                    onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
+                {% endif %}
                 {% endif %}
             </td>
         </tr>

@@ -53,47 +53,38 @@ hypothetical = {}
 saved_selected_teams = set(DEFAULT_TEAMS)
 saved_compare_teams  = set()
 
-# ── Persistenz ────────────────────────────────────────────────────────────────
+# ── Per-user state (JSON files) ───────────────────────────────────────────────
 
-def load_state():
-    global hypothetical, saved_selected_teams, saved_compare_teams
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r", encoding="utf-8") as f:
+def _state_path(username):
+    return f"data/state_{username}.json"
+
+def load_user_state(username):
+    """Load state for a user; return defaults if no file exists yet."""
+    path = _state_path(username)
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        hypothetical = {int(k): tuple(v) for k, v in data.get("hypothetical", {}).items()}
-        saved_selected_teams = set(data.get("selected_teams", list(DEFAULT_TEAMS)))
-        saved_compare_teams  = set(data.get("compare_teams", []))
-
-def save_state(selected_teams, compare_teams):
-    data = {
-        "hypothetical": {str(k): list(v) for k, v in hypothetical.items()},
-        "selected_teams": sorted(selected_teams),
-        "compare_teams":  sorted(compare_teams),
+        return {
+            # Keys are saison_25_26 indices
+            "hypothetical":   {int(k): tuple(v) for k, v in data.get("hypothetical", {}).items()},
+            "selected_teams": set(data.get("selected_teams", list(DEFAULT_TEAMS))),
+            "compare_teams":  set(data.get("compare_teams", [])),
+        }
+    return {
+        "hypothetical":   {},
+        "selected_teams": set(DEFAULT_TEAMS),
+        "compare_teams":  set(),
     }
-    with open(STATE_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
 
-def write_games_py():
-    """Schreibt saison_25_26 zurück in games.py, saison_24_25 bleibt unangetastet."""
-    with open(GAMES_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-    marker = "\nsaison_24_25"
-    cut = content.find(marker)
-    suffix = content[cut:] if cut != -1 else ""
-
-    lines = ["saison_25_26 = [\n"]
-    for game in saison_25_26:
-        if len(game) == 2:
-            lines.append(f'    ("{game[0]}", "{game[1]}"),\n')
-        else:
-            lines.append(f'    ("{game[0]}", "{game[1]}", {game[2]}, {game[3]}),\n')
-    lines.append("]\n")
-
-    with open(GAMES_FILE, "w", encoding="utf-8") as f:
-        f.write("".join(lines))
-        f.write(suffix)
-
-load_state()
+def save_user_state(username, state):
+    path = _state_path(username)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({
+            "hypothetical":   {str(k): list(v) for k, v in state["hypothetical"].items()},
+            "selected_teams": sorted(state["selected_teams"]),
+            "compare_teams":  sorted(state["compare_teams"]),
+        }, f, ensure_ascii=False, indent=2)
 
 # ── Hilfsfunktionen ───────────────────────────────────────────────────────────
 
