@@ -20,21 +20,9 @@
       99,
       90
     ],
-    "22": [
-      80,
-      50
-    ],
-    "1": [
-      80,
-      78
-    ],
     "50": [
       80,
       90
-    ],
-    "14": [
-      95,
-      85
     ],
     "20": [
       90,
@@ -42,7 +30,8 @@
     ]
   },
   "selected_teams": [
-    "BB Löwen Braunschweig"
+    "BB Löwen Braunschweig",
+    "Science City Jena"
   ],
   "compare_teams": []
 }
