@@ -30,14 +30,10 @@ def load_user(username):
     if username in USERS:
         return User(username)
     return None
- 
-# ── Constants ─────────────────────────────────────────────────────────────────
- 
-name_to_team = {}
 
-completed_games = [g for g in saison_25_26 if len(g) == 4]
-pending_games   = [g for g in saison_25_26 if len(g) == 2]
-pending_saison_indices = [i for i, g in enumerate(saison_25_26) if len(g) == 2]
+# ── Constants ─────────────────────────────────────────────────────────────────
+
+GAMES_FILE = "data/games.py"
 
 DEFAULT_TEAMS = {
     "BB Löwen Braunschweig",
@@ -46,12 +42,12 @@ DEFAULT_TEAMS = {
     "SYNTAINICS MBC",
 }
 
-STATE_FILE = "data/state.json"
-GAMES_FILE = "data/games.py"
+# Derived game lists (rebuilt by finalize_game).
+# hypothetical is now keyed by saison_25_26 index — not pending_games index.
+completed_games = [g for g in saison_25_26 if len(g) == 4]
+pending_games   = [g for g in saison_25_26 if len(g) == 2]
 
-hypothetical = {}
-saved_selected_teams = set(DEFAULT_TEAMS)
-saved_compare_teams  = set()
+name_to_team = {}
 
 # ── Per-user state (JSON files) ───────────────────────────────────────────────
 
@@ -86,24 +82,32 @@ def save_user_state(username, state):
             "compare_teams":  sorted(state["compare_teams"]),
         }, f, ensure_ascii=False, indent=2)
 
-# ── Hilfsfunktionen ───────────────────────────────────────────────────────────
+# ── Game data helpers ─────────────────────────────────────────────────────────
 
 def get_team(name):
     if name not in name_to_team:
         name_to_team[name] = Team(name)
     return name_to_team[name]
 
-def _build_stats(filter_teams=None):
+def _build_stats(hypothetical, filter_teams=None):
+    """Build TeamStats from completed games + current user's hypotheticals.
+
+    hypothetical: dict mapping saison_25_26 index to (score1, score2)
+    """
     teams = defaultdict(TeamStats)
-    all_games = list(completed_games)
-    for idx, (t1, t2) in enumerate(pending_games):
-        if idx in hypothetical:
-            p1, p2 = hypothetical[idx]
-            all_games.append((t1, t2, p1, p2))
-    for t1, t2, p1, p2 in all_games:
+    for i, game in enumerate(saison_25_26):
+        if len(game) == 4:
+            t1, t2, p1, p2 = game
+        elif i in hypothetical:
+            t1, t2 = game
+            p1, p2 = hypothetical[i]
+        else:
+            continue  # pending, no hypothetical set
+
         if filter_teams is not None:
             if t1 not in filter_teams or t2 not in filter_teams:
                 continue
+
         t1_obj = get_team(t1)
         t2_obj = get_team(t2)
         win1 = p1 > p2
@@ -114,13 +118,12 @@ def _build_stats(filter_teams=None):
 def _sort_key_simple(stats):
     return (-stats.plus_points(), -stats.point_diff(), -stats.points)
 
-def compute_standings(filter_teams=None):
-    full_stats = _build_stats(filter_teams)
+def compute_standings(hypothetical, filter_teams=None):
+    full_stats = _build_stats(hypothetical, filter_teams)
     if filter_teams is not None:
         return sorted(full_stats.items(), key=lambda x: _sort_key_simple(x[1]))
-    items = list(full_stats.items())
     groups = {}
-    for team, stats in items:
+    for team, stats in full_stats.items():
         groups.setdefault(stats.plus_points(), []).append((team, stats))
     result = []
     for pts in sorted(groups.keys(), reverse=True):
@@ -129,7 +132,7 @@ def compute_standings(filter_teams=None):
             result.extend(group)
         else:
             group_names = {team.name for team, _ in group}
-            h2h_stats = _build_stats(filter_teams=group_names)
+            h2h_stats = _build_stats(hypothetical, filter_teams=group_names)
             def tiebreak_key(item, h2h=h2h_stats):
                 team, full = item
                 h2h_s = h2h.get(team, TeamStats())
@@ -137,6 +140,26 @@ def compute_standings(filter_teams=None):
                         -full.point_diff(), -full.points)
             result.extend(sorted(group, key=tiebreak_key))
     return result
+
+def write_games_py():
+    """Rewrite saison_25_26 in games.py; saison_24_25 is left untouched."""
+    with open(GAMES_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    marker = "\nsaison_24_25"
+    cut = content.find(marker)
+    suffix = content[cut:] if cut != -1 else ""
+
+    lines = ["saison_25_26 = [\n"]
+    for game in saison_25_26:
+        if len(game) == 2:
+            lines.append(f'    ("{game[0]}", "{game[1]}"),\n')
+        else:
+            lines.append(f'    ("{game[0]}", "{game[1]}", {game[2]}, {game[3]}),\n')
+    lines.append("]\n")
+
+    with open(GAMES_FILE, "w", encoding="utf-8") as f:
+        f.write("".join(lines))
+        f.write(suffix)
 
 # ── Auth routes ───────────────────────────────────────────────────────────────
  
@@ -166,37 +189,46 @@ def logout():
 @app.route('/')
 @login_required
 def home():
-    global saved_selected_teams, saved_compare_teams
-    all_team_names = sorted(set(
-        team for game in saison_25_26 for team in [game[0], game[1]]))
+    state = load_user_state(current_user.id)
+    hypothetical = state["hypothetical"]
+
+    all_team_names = sorted({
+        team for game in saison_25_26 for team in [game[0], game[1]]
+    })
 
     raw_selected = request.args.getlist('teams')
-    selected_teams = set(raw_selected) if raw_selected else set(saved_selected_teams)
-    compare_teams  = set(request.args.getlist('compare'))
+    has_url_params = raw_selected or 'compare' in request.args
 
-    if raw_selected or 'compare' in request.args:
-        saved_selected_teams = selected_teams
-        saved_compare_teams  = compare_teams
-        save_state(selected_teams, compare_teams)
+    if has_url_params:
+        selected_teams = set(raw_selected)
+        compare_teams  = set(request.args.getlist('compare'))
+        state["selected_teams"] = selected_teams
+        state["compare_teams"]  = compare_teams
+        save_user_state(current_user.id, state)
+    else:
+        selected_teams = state["selected_teams"]
+        compare_teams  = state["compare_teams"]
 
+    # Count hypothetical games and wins per team
     hypo_count = {}
     hypo_wins  = {}
-    for idx, (t1, t2) in enumerate(pending_games):
-        if idx in hypothetical:
+    for i, game in enumerate(saison_25_26):
+        if len(game) == 2 and i in hypothetical:
+            t1, t2 = game
             hypo_count[t1] = hypo_count.get(t1, 0) + 1
             hypo_count[t2] = hypo_count.get(t2, 0) + 1
-            s1, s2 = hypothetical[idx]
+            s1, s2 = hypothetical[i]
             if s1 > s2:
                 hypo_wins[t1] = hypo_wins.get(t1, 0) + 1
             elif s2 > s1:
                 hypo_wins[t2] = hypo_wins.get(t2, 0) + 1
 
-    full_standings   = compute_standings()
+    full_standings   = compute_standings(hypothetical)
     direct_standings = None
     if len(compare_teams) >= 2:
         direct_standings = [
             (team, stats)
-            for team, stats in compute_standings(filter_teams=compare_teams)
+            for team, stats in compute_standings(hypothetical, filter_teams=compare_teams)
             if team.name in compare_teams
         ]
 
@@ -206,8 +238,15 @@ def home():
     def is_compare_game(game):
         return len(compare_teams) >= 2 and game[0] in compare_teams and game[1] in compare_teams
 
-    visible_completed = [(g, is_compare_game(g)) for g in completed_games if game_visible(g)]
-    visible_pending   = [(idx, g, is_compare_game(g)) for idx, g in enumerate(pending_games) if game_visible(g)]
+    visible_completed = [
+        (g, is_compare_game(g))
+        for g in saison_25_26 if len(g) == 4 and game_visible(g)
+    ]
+    visible_pending = [
+        (i, game, is_compare_game(game))
+        for i, game in enumerate(saison_25_26)
+        if len(game) == 2 and game_visible(game)
+    ]
 
     return render_template('index.html',
                            all_team_names=all_team_names,
@@ -219,56 +258,58 @@ def home():
                            hypo_count=hypo_count,
                            hypo_wins=hypo_wins,
                            visible_completed=visible_completed,
-                           visible_pending=visible_pending)
+                           visible_pending=visible_pending,
+                           is_admin=(current_user.id == ADMIN_USER))
+
+# ── Score routes ──────────────────────────────────────────────────────────────
 
 @app.route('/set_score/<int:idx>', methods=['POST'])
 @login_required
 def set_score(idx):
+    state = load_user_state(current_user.id)
     s1 = request.form.get('score1', '').strip()
     s2 = request.form.get('score2', '').strip()
     if s1 and s2:
-        hypothetical[idx] = (int(s1), int(s2))
+        state["hypothetical"][idx] = (int(s1), int(s2))
     else:
-        hypothetical.pop(idx, None)
-    save_state(saved_selected_teams, saved_compare_teams)
+        state["hypothetical"].pop(idx, None)
+    save_user_state(current_user.id, state)
     return redirect(request.referrer or '/')
 
 @app.route('/clear_score/<int:idx>')
 @login_required
 def clear_score(idx):
-    hypothetical.pop(idx, None)
-    save_state(saved_selected_teams, saved_compare_teams)
+    state = load_user_state(current_user.id)
+    state["hypothetical"].pop(idx, None)
+    save_user_state(current_user.id, state)
     return redirect(request.referrer or '/')
 
 @app.route('/finalize/<int:idx>')
 @login_required
 def finalize_game(idx):
-    """Schreibt eine Hypothese als echtes Ergebnis fest (nicht revidierbar über die App)."""
-    if idx not in hypothetical or idx >= len(pending_games):
-        return redirect(request.referrer or '/')
+    """Write a hypothetical as a real result (irreversible). Admin only by convention."""
+    if idx >= len(saison_25_26) or len(saison_25_26[idx]) != 2:
+        return redirect('/')
 
-    t1, t2 = pending_games[idx]
-    s1, s2 = hypothetical[idx]
-    saison_idx = pending_saison_indices[idx]
+    state = load_user_state(current_user.id)
+    if idx not in state["hypothetical"]:
+        return redirect('/')
 
-    # In-Memory-Update von saison_25_26
-    saison_25_26[saison_idx] = (t1, t2, s1, s2)
+    t1, t2 = saison_25_26[idx]
+    s1, s2 = state["hypothetical"][idx]
 
-    # Abgeleitete Listen neu aufbauen
-    completed_games[:]        = [g for g in saison_25_26 if len(g) == 4]
-    pending_games[:]          = [g for g in saison_25_26 if len(g) == 2]
-    pending_saison_indices[:] = [i for i, g in enumerate(saison_25_26) if len(g) == 2]
+    # Write result into the in-memory game list
+    saison_25_26[idx] = (t1, t2, s1, s2)
 
-    # Hypothese entfernen, restliche Indices verschieben
-    new_hypo = {(k - 1 if k > idx else k): v
-                for k, v in hypothetical.items() if k != idx}
-    hypothetical.clear()
-    hypothetical.update(new_hypo)
+    # Rebuild derived lists
+    completed_games[:] = [g for g in saison_25_26 if len(g) == 4]
+    pending_games[:]   = [g for g in saison_25_26 if len(g) == 2]
 
-    # Auf Festplatte schreiben
+    # Remove from this user's hypotheticals (index stays valid — no shift needed)
+    del state["hypothetical"][idx]
+    save_user_state(current_user.id, state)
+
     write_games_py()
-    save_state(saved_selected_teams, saved_compare_teams)
-
     return redirect('/')
 
 if __name__ == "__main__":
