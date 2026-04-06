@@ -11,7 +11,7 @@ from werkzeug.security import check_password_hash
 from models.team import Team
 from models.team_stats import TeamStats
 from data.games import saison_25_26
-from users import USERS, ADMIN_USER
+from data.users import USERS, ADMIN_USER
  
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
