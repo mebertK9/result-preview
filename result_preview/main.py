@@ -1,13 +1,38 @@
 import json
 import os
 from collections import defaultdict
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
+from flask_login import (
+    LoginManager, UserMixin,
+    login_user, logout_user, login_required, current_user,
+)
+from werkzeug.security import check_password_hash
+ 
 from models.team import Team
 from models.team_stats import TeamStats
 from data.games import saison_25_26
-
+from users import USERS, ADMIN_USER
+ 
 app = Flask(__name__)
-
+app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
+ 
+# ── Flask-Login setup ─────────────────────────────────────────────────────────
+ 
+login_manager = LoginManager(app)
+login_manager.login_view = "login_page"
+ 
+class User(UserMixin):
+    def __init__(self, username):
+        self.id = username
+ 
+@login_manager.user_loader
+def load_user(username):
+    if username in USERS:
+        return User(username)
+    return None
+ 
+# ── Constants ─────────────────────────────────────────────────────────────────
+ 
 name_to_team = {}
 
 completed_games = [g for g in saison_25_26 if len(g) == 4]
