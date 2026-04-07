@@ -1,4 +1,3 @@
-import json
 import os
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for
@@ -12,7 +11,9 @@ from models.team import Team
 from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
- 
+from data.persistence import load_all, get_games, save_games  # ← new
+from data.persistence import load_user_state, save_user_state  # ← replaces file I/O
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
  
@@ -30,6 +31,14 @@ def load_user(username):
     if username in USERS:
         return User(username)
     return None
+
+# ── Boot: load persisted state from JSONBin ───────────────────────────────────
+
+load_all(_initial_games)
+
+# saison_25_26 is the single source of truth for the running process.
+# We re-use the name so the rest of the module needs no changes.
+saison_25_26 = [tuple(g) for g in get_games()]
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -49,39 +58,6 @@ pending_games   = [g for g in saison_25_26 if len(g) == 2]
 
 name_to_team = {}
 
-# ── Per-user state (JSON files) ───────────────────────────────────────────────
-
-def _state_path(username):
-    return f"data/state_{username}.json"
-
-def load_user_state(username):
-    """Load state for a user; return defaults if no file exists yet."""
-    path = _state_path(username)
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return {
-            # Keys are saison_25_26 indices
-            "hypothetical":   {int(k): tuple(v) for k, v in data.get("hypothetical", {}).items()},
-            "selected_teams": set(data.get("selected_teams", list(DEFAULT_TEAMS))),
-            "compare_teams":  set(data.get("compare_teams", [])),
-        }
-    return {
-        "hypothetical":   {},
-        "selected_teams": set(DEFAULT_TEAMS),
-        "compare_teams":  set(),
-    }
-
-def save_user_state(username, state):
-    path = _state_path(username)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump({
-            "hypothetical":   {str(k): list(v) for k, v in state["hypothetical"].items()},
-            "selected_teams": sorted(state["selected_teams"]),
-            "compare_teams":  sorted(state["compare_teams"]),
-        }, f, ensure_ascii=False, indent=2)
-
 # ── Game data helpers ─────────────────────────────────────────────────────────
 
 def get_team(name):
@@ -90,10 +66,7 @@ def get_team(name):
     return name_to_team[name]
 
 def _build_stats(hypothetical, filter_teams=None):
-    """Build TeamStats from completed games + current user's hypotheticals.
-
-    hypothetical: dict mapping saison_25_26 index to (score1, score2)
-    """
+    """Build TeamStats from completed games + current user's hypotheticals."""
     teams = defaultdict(TeamStats)
     for i, game in enumerate(saison_25_26):
         if len(game) == 4:
@@ -189,7 +162,7 @@ def logout():
 @app.route('/')
 @login_required
 def home():
-    state = load_user_state(current_user.id)
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     hypothetical = state["hypothetical"]
 
     all_team_names = sorted({
@@ -266,7 +239,7 @@ def home():
 @app.route('/set_score/<int:idx>', methods=['POST'])
 @login_required
 def set_score(idx):
-    state = load_user_state(current_user.id)
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     s1 = request.form.get('score1', '').strip()
     s2 = request.form.get('score2', '').strip()
     if s1 and s2:
@@ -279,7 +252,7 @@ def set_score(idx):
 @app.route('/clear_score/<int:idx>')
 @login_required
 def clear_score(idx):
-    state = load_user_state(current_user.id)
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     state["hypothetical"].pop(idx, None)
     save_user_state(current_user.id, state)
     return redirect(request.referrer or '/')
@@ -291,7 +264,7 @@ def finalize_game(idx):
     if idx >= len(saison_25_26) or len(saison_25_26[idx]) != 2:
         return redirect('/')
 
-    state = load_user_state(current_user.id)
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     if idx not in state["hypothetical"]:
         return redirect('/')
 
