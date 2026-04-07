@@ -208,7 +208,7 @@ def home():
 
     visible_completed = [
         (g, is_compare_game(g))
-        for g in saison_25_26 if len(g) == 4 and game_visible(g)
+        for g in saison_25_26 if len(g) == 4
     ]
     visible_pending = [
         (i, game, is_compare_game(game))

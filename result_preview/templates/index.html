@@ -207,23 +207,95 @@
 {# Helper macro: returns short name if mapping exists, otherwise full name #}
 {% macro sn(full_name) %}{{ name_map.get(full_name, full_name) }}{% endmacro %}
 
+    <details>
+        <summary>Auswahl Teams</summary>
+        <h2>Spiele anzeigen für...</h2>
+        <form method="GET" id="teamFilter">
+            {% for t in compare_teams %}
+            <input type="hidden" name="compare" value="{{t}}">
+            {% endfor %}
+            <div class="team-grid">
+            {% for name in all_team_names %}
+            <label>
+                <input type="checkbox" name="teams" value="{{name}}"
+                       {% if name in selected_teams %}checked{% endif %}
+                       onchange="this.form.submit()">
+                {{name}}
+            </label>
+            {% endfor %}
+            </div>
+        </form>
+    </details>
+    
+    <h2>Ausstehende Spiele</h2>
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>Team 1</th>
+            <th>Team 2</th>
+            <th>Was wäre wenn?</th>
+        </tr>
+        {% for idx, game, is_compare in visible_pending %}
+        {% set has_hypo = idx in hypothetical %}
+        {% set first_won = has_hypo and hypothetical[idx][0] > hypothetical[idx][1] %}
+        {% set second_won = has_hypo and hypothetical[idx][1] > hypothetical[idx][0] %}
+        <tr class="{% if is_compare and has_hypo %}hypo-compare{% elif is_compare %}compare-game{% elif has_hypo %}hypo-row{% endif %}">
+            <td class="team-name {%if first_won %}bold{% endif %}">{{ sn(game[0]) }}</td>
+            <td class="team-name {%if second_won %}bold{% endif %}">{{ sn(game[1]) }}</td>
+            <td>
+                <form class="score-form" method="POST" action="/set_score/{{idx}}">
+                    <input type="number" name="score1" inputmode="numeric"
+                           value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}"
+                           placeholder="–">
+                    <span class="score-sep">:</span>
+                    <input type="number" name="score2" inputmode="numeric"
+                           value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}"
+                           placeholder="–">
+                    <button type="submit" class="btn-set">✓</button>
+                </form>
+                {% if has_hypo %}
+                <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
+                {% if is_admin %}
+                <a href="/finalize/{{idx}}" class="btn-finalize"
+                   title="Spiel festschreiben (nicht revidierbar)"
+                   onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
+                {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
 
-    <h2>Teams</h2>
-    <form method="GET" id="teamFilter">
-        {% for t in compare_teams %}
-        <input type="hidden" name="compare" value="{{t}}">
+    {% if direct_standings %}
+    <h2>Direkter Vergleich</h2>
+    <div class="table-wrap">
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Sp</th>
+            <th>S</th>
+            <th>Pkt</th>
+            <th>K+</th>
+            <th>K−</th>
+            <th>Diff</th>
+        </tr>
+        {% for name, stats in direct_standings %}
+        <tr>
+            <td>{{loop.index}}</td>
+            <td class="team-name">{{ sn(name) }}</td>
+            <td>{{stats.games}}</td>
+            <td>{{stats.wins}}</td>
+            <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+            <td>{{stats.points}}</td>
+            <td>{{stats.against}}</td>
+            <td>{{stats.point_diff()}}</td>
+        </tr>
         {% endfor %}
-        <div class="team-grid">
-        {% for name in all_team_names %}
-        <label>
-            <input type="checkbox" name="teams" value="{{name}}"
-                   {% if name in selected_teams %}checked{% endif %}
-                   onchange="this.form.submit()">
-            {{name}}
-        </label>
-        {% endfor %}
-        </div>
-    </form>
+    </table>
+    </div>
+    {% endif %}
 
     <h2>Gesamttabelle</h2>
     <form method="GET" id="compareForm">
@@ -270,92 +342,28 @@
         </div>
     </form>
 
-    {% if direct_standings %}
-    <h2>Direkter Vergleich</h2>
-    <div class="table-wrap">
-    <table>
-        <tr>
-            <th>#</th>
-            <th>Team</th>
-            <th>Sp</th>
-            <th>S</th>
-            <th>Pkt</th>
-            <th>K+</th>
-            <th>K−</th>
-            <th>Diff</th>
-        </tr>
-        {% for name, stats in direct_standings %}
-        <tr>
-            <td>{{loop.index}}</td>
-            <td class="team-name">{{ sn(name) }}</td>
-            <td>{{stats.games}}</td>
-            <td>{{stats.wins}}</td>
-            <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
-            <td>{{stats.points}}</td>
-            <td>{{stats.against}}</td>
-            <td>{{stats.point_diff()}}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    </div>
-    {% endif %}
 
-    <h2>Ausstehende Spiele</h2>
-    <div class="table-wrap">
-    <table>
-        <tr>
-            <th>Team 1</th>
-            <th>Team 2</th>
-            <th>Was wäre wenn?</th>
-        </tr>
-        {% for idx, game, is_compare in visible_pending %}
-        {% set has_hypo = idx in hypothetical %}
-        <tr class="{% if is_compare and has_hypo %}hypo-compare{% elif is_compare %}compare-game{% elif has_hypo %}hypo-row{% endif %}">
-            <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
-            <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
-            <td>
-                <form class="score-form" method="POST" action="/set_score/{{idx}}">
-                    <input type="number" name="score1" inputmode="numeric"
-                           value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}"
-                           placeholder="–">
-                    <span class="score-sep">:</span>
-                    <input type="number" name="score2" inputmode="numeric"
-                           value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}"
-                           placeholder="–">
-                    <button type="submit" class="btn-set">✓</button>
-                </form>
-                {% if has_hypo %}
-                <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
-                {% if is_admin %}
-                <a href="/finalize/{{idx}}" class="btn-finalize"
-                   title="Spiel festschreiben (nicht revidierbar)"
-                   onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
-                {% endif %}
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    </div>
+    <details>
+      <summary>Alle Ergebnisse</summary>
 
-    <h2>Gespielte Spiele</h2>
-    <div class="table-wrap">
-    <table>
-        <tr>
-            <th>Team 1</th>
-            <th>Team 2</th>
-            <th>Ergebnis</th>
-        </tr>
-        {% for game, is_compare in visible_completed %}
-        <tr {% if is_compare %}class="compare-game"{% endif %}>
-            <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
-            <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
-            <td>{{game[2]}} : {{game[3]}}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    </div>
+      <div class="table-wrap">
+      <table>
+          <tr>
+              <th>Team 1</th>
+              <th>Team 2</th>
+              <th>Ergebnis</th>
+          </tr>
+          {% for game, is_compare in visible_completed %}
+          <tr {% if is_compare %}class="compare-game"{% endif %}>
+              <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
+              <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
+              <td>{{game[2]}} : {{game[3]}}</td>
+          </tr>
+          {% endfor %}
+      </table>
+      </div>
 
+    </details>
 
 <script>
     // Remember scroll position and restore after reload
