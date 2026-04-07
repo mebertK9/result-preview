@@ -11,7 +11,6 @@ from models.team import Team
 from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
-from data.persistence import load_all, get_games, save_games  # ← new
 from data.persistence import load_user_state, save_user_state  # ← replaces file I/O
 
 app = Flask(__name__)
