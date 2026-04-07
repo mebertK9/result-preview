@@ -11,7 +11,7 @@ from models.team import Team
 from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
-from data.persistence import load_user_state, save_user_state  # ← replaces file I/O
+from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
@@ -31,13 +31,9 @@ def load_user(username):
         return User(username)
     return None
 
-# ── Boot: load persisted state from JSONBin ───────────────────────────────────
+# Load persisted state on startup.
 
-load_all(_initial_games)
-
-# saison_25_26 is the single source of truth for the running process.
-# We re-use the name so the rest of the module needs no changes.
-saison_25_26 = [tuple(g) for g in get_games()]
+load_stats()
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 

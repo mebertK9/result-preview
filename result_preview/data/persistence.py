@@ -17,7 +17,7 @@ _BIN_URL = "https://api.jsonbin.io/v3/b"
 _BIN_ID  = os.environ.get("JSONBIN_BIN_ID", "")
 _HEADERS = {
     "Content-Type":  "application/json",
-    "X-Master-Key":  os.environ.get("JSONBIN_API_KEY", ""),
+    "X-Access-Key":  os.environ.get("JSONBIN_API_KEY", ""),
     "X-Bin-Versioning": "false",   # always overwrite, no version history needed
 }
 
@@ -45,11 +45,30 @@ def _push_remote(data: dict) -> None:
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+def load_stats():
+    """
+    Load the full persisted state.
+
+    Returns a dict:
+        {
+             username: { "hypothetical": {}, ... }
+        }
+    """
+    global _cache
+    try:
+        remote = _fetch_remote()
+        print(f"[persistence] Loaded state from JSONBin: {remote}")
+        _cache = remote
+    except Exception as exc:
+        print(f"[persistence] WARNING: could not fetch from JSONBin: {exc}")
+        # Fail gracefully – return defaults so the app at least starts.
+        _cache = {}
+
 def load_user_state(username: str, default_teams: set) -> dict:
     """Return the persisted state for *username*, or sensible defaults."""
     if _cache is None:
-        raise RuntimeError("Call load_all() before load_user_state().")
-    raw = _cache.get("users", {}).get(username)
+        raise RuntimeError("Call load_stats() before load_user_state().")
+    raw = _cache.get(username)
     if raw is None:
         return {
             "hypothetical":   {},
@@ -66,8 +85,8 @@ def load_user_state(username: str, default_teams: set) -> dict:
 def save_user_state(username: str, state: dict) -> None:
     """Persist *state* for *username*."""
     if _cache is None:
-        raise RuntimeError("Call load_all() before save_user_state().")
-    _cache.setdefault("users", {})[username] = {
+        raise RuntimeError("Call load_stats() before save_user_state().")
+    _cache[username] = {
         "hypothetical":   {str(k): list(v) for k, v in state["hypothetical"].items()},
         "selected_teams": sorted(state["selected_teams"]),
         "compare_teams":  sorted(state["compare_teams"]),
