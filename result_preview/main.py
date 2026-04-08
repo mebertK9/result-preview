@@ -280,5 +280,14 @@ def finalize_game(idx):
     write_games_py()
     return redirect('/')
 
+@app.route("/move", methods=["POST"])
+def move():
+    grid = session["grid"]
+    r = request.json["row"]
+    s = request.json["action"]
+    grid = apply_action(grid, r, s)
+    session["grid"] = grid
+    return jsonify(to_rettungswagen(grid))
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
