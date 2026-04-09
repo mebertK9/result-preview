@@ -93,4 +93,4 @@ def save_user_state(username: str, state: dict) -> None:
         "compare_teams":  sorted(state["compare_teams"]),
         "grid" : state["grid"],
     }
-    _push_remote(_cache)
+    # _push_remote(_cache)

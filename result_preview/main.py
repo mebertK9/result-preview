@@ -305,11 +305,10 @@ def move():
     r = request.json["row"]
     s = request.json["action"]
     grid = state["grid"]
-    print(f"grid: {grid}")
     if(grid == {}):
         print("grid is empty")
         grid = init_grid()
-    state["grid"] = apply_action(grid, r, s)
+    state["grid"] = apply_action(grid, r, "S", s)
     save_user_state(current_user.id, state)
     return jsonify(to_rettungswagen(state["grid"]))
 

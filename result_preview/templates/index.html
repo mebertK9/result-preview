@@ -399,9 +399,11 @@
 <script>
   const grid      = {{ grid | tojson }};
   const lionGames = {{ lion_games | tojson }};
-
+  const hypothetical = {{ hypothetical | tojson }};
+  
   renderRettungsgasse("game-loewen", grid, {
     games: lionGames,
+    hypotheticals: hypothetical,
     onAction: async function(gameIdx, rowIndex, action, score1, score2) {
       if (score1 !== null && score2 !== null) {
         await fetch(`/set_score/${gameIdx}`, {
@@ -419,6 +421,7 @@
       const handler = arguments.callee;
       renderRettungsgasse("game-loewen", newRows, {
         games: lionGames,
+        hypotheticals: hypothetical,
         onAction: handler
       });
     }

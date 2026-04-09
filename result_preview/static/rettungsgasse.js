@@ -122,7 +122,7 @@
       </div>`;
   }
 
-  function buildRows(prefix, rows, games, onAction) {
+  function buildRows(prefix, rows, games, hypotheticals, onAction) {
     const area = document.getElementById(`${prefix}-rows`);
     area.innerHTML = '';
 
@@ -153,9 +153,10 @@
         rc.innerHTML = '<div class="rg-car-window"></div><div class="rg-car-strip"></div>';
 
         const game = games && games[i];
+        const hypothetical = hypotheticals && hypotheticals[game?.idx];
         if (game && onAction) {
           rc.classList.add('has-game');
-          rc.addEventListener('click', () => openPopup(game, i, onAction));
+          rc.addEventListener('click', () => openPopup(game, hypothetical, i, onAction));
         }
 
         div.appendChild(rc);
@@ -165,7 +166,7 @@
     });
   }
 
-  function openPopup(game, rowIndex, onAction) {
+  function openPopup(game, hypothetical, rowIndex, onAction) {
     closePopup();
 
     const LOEWEN = "BB Löwen Braunschweig";
@@ -186,9 +187,9 @@
       <p class="rg-popup-label">Spiel ${rowIndex + 1} – Ergebnis eintragen</p>
       <p class="rg-popup-teams">${homeLabel} : ${awayLabel}</p>
       <div class="rg-popup-scores">
-        <input type="number" id="rg-s1" inputmode="numeric" placeholder="–" min="0">
+        <input type="number" id="rg-s1" inputmode="numeric" value="${hypothetical ? hypothetical[0] : ''}" placeholder="–" min="0">
         <span class="rg-sep">:</span>
-        <input type="number" id="rg-s2" inputmode="numeric" placeholder="–" min="0">
+        <input type="number" id="rg-s2" inputmode="numeric" value="${hypothetical ? hypothetical[1] : ''}" placeholder="–" min="0">
       </div>
       <div class="rg-popup-btns">
         <button class="rg-btn-win"  id="rg-btn-win">🏆 Löwen gewinnen</button>
@@ -197,6 +198,12 @@
       </div>
       <p class="rg-popup-hint">Ergebnis optional – Aktion bestimmt die Richtung</p>
     `;
+
+    if (hypothetical && game.idx in hypothetical) {
+      const [s1, s2] = hypothetical[game.idx];
+      document.getElementById("rg-s1").value = s1;
+      document.getElementById("rg-s2").value = s2;
+    }
 
     popup.querySelector('#rg-btn-cancel').addEventListener('click', closePopup);
 
@@ -295,12 +302,13 @@
 
     const prefix   = containerId;
     const games    = options.games    || null;
+    const hypotheticals = options.hypotheticals || null;
     const onAction = options.onAction || null;
     const isFirst  = !container.querySelector('.rg-scene');
 
     if (isFirst) {
       buildScaffold(container, prefix);
-      buildRows(prefix, rows, games, onAction);
+      buildRows(prefix, rows, games, hypotheticals, onAction);
 
       const layer = document.getElementById(`${prefix}-amb-layer`);
       layer.style.top    = LION_H + 'px';

@@ -52,7 +52,7 @@ def init_grid() -> list[list[str]]:
     return grid
 
 
-def apply_action(grid: list[list[str]], r: int, s: str) -> list[list[str]]:
+def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[str]]:
     """
     Applies the player's action string to row r and returns the updated grid.
 
@@ -64,9 +64,15 @@ def apply_action(grid: list[list[str]], r: int, s: str) -> list[list[str]]:
       L: S = move right (col 2 -> 3), N = move to mandatory target
     """
     if r < MANDATORY_ROWS:
-        action_g, action_l = s[0], s[1]
+        action_l = action_g = ""
+        if(kind == "G"):
+            action_g = s
+            action_l = ""
+        elif(kind == "L"):
+            action_l = s
+            action_g = ""
 
-        if grid[r][1] == "G":
+        if grid[r][1] == "G" and action_g in ("N", "S"):
             if action_g == "N":
                 grid[r][0] = "G"
                 grid[r][1] = "-"
@@ -74,7 +80,7 @@ def apply_action(grid: list[list[str]], r: int, s: str) -> list[list[str]]:
                 if place_in_mandatory_target(grid, "G"):
                     grid[r][1] = "-"
 
-        if grid[r][2] == "L":
+        if grid[r][2] == "L" and action_l in ("N", "S"):
             if action_l == "S":
                 grid[r][3] = "L"
                 grid[r][2] = "-"
