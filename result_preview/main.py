@@ -234,7 +234,7 @@ def home():
 
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
-                           lion_games=lion_games,
+                           lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
@@ -308,9 +308,10 @@ def move():
     if(grid == {}):
         print("grid is empty")
         grid = init_grid()
-    state["grid"] = apply_action(grid, r, "S", s)
+    state["grid"] = apply_action(grid, r, "L", s)
     save_user_state(current_user.id, state)
-    return jsonify(to_rettungswagen(state["grid"]))
+    val = to_rettungswagen(state["grid"])
+    return jsonify(val)
 
 @app.route("/reset", methods=["POST"])
 @login_required

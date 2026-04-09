@@ -156,7 +156,7 @@
         const hypothetical = hypotheticals && hypotheticals[game?.idx];
         if (game && onAction) {
           rc.classList.add('has-game');
-          rc.addEventListener('click', () => openPopup(game, hypothetical, i, onAction));
+          rc.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction));
         }
 
         div.appendChild(rc);
@@ -198,12 +198,6 @@
       </div>
       <p class="rg-popup-hint">Ergebnis optional – Aktion bestimmt die Richtung</p>
     `;
-
-    if (hypothetical && game.idx in hypothetical) {
-      const [s1, s2] = hypothetical[game.idx];
-      document.getElementById("rg-s1").value = s1;
-      document.getElementById("rg-s2").value = s2;
-    }
 
     popup.querySelector('#rg-btn-cancel').addEventListener('click', closePopup);
 

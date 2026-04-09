@@ -39,14 +39,14 @@ def to_rettungswagen(grid: list[list[str]]) -> list[tuple[int | None, int | None
         g_pos = row.index("G") if "G" in row else None
         l_pos = row.index("L") if "L" in row else None
         result.append((g_pos, l_pos))
-    return result
+    return list(reversed(result))  # reverse to have most recent game at the end
 
 def init_grid() -> list[list[str]]:
     """Creates and returns the initial grid state."""
     grid = [["-" for _ in range(COLS)] for _ in range(ROWS)]
     for r in range(MANDATORY_ROWS):
-        grid[r][1] = "G"
-        grid[r][2] = "L"
+        grid[MANDATORY_ROWS-1-r][1] = "G"
+        grid[MANDATORY_ROWS-1-r][2] = "L"
     for r in range(MANDATORY_ROWS, ROWS):
         grid[r][2] = "L"
     return grid
@@ -63,6 +63,9 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
       G: N = move left (col 1 -> 0), S = move to mandatory target
       L: S = move right (col 2 -> 3), N = move to mandatory target
     """
+    if kind not in ("G", "L") or s not in ("S", "N"):
+        raise ValueError(f"Invalid car type (kind) or action: kind={kind}, s={s}")
+
     if r < MANDATORY_ROWS:
         action_l = action_g = ""
         if(kind == "G"):
@@ -72,7 +75,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
             action_l = s
             action_g = ""
 
-        if grid[r][1] == "G" and action_g in ("N", "S"):
+        if grid[r][1] == "G":
             if action_g == "N":
                 grid[r][0] = "G"
                 grid[r][1] = "-"
@@ -80,7 +83,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
                 if place_in_mandatory_target(grid, "G"):
                     grid[r][1] = "-"
 
-        if grid[r][2] == "L" and action_l in ("N", "S"):
+        if grid[r][2] == "L":
             if action_l == "S":
                 grid[r][3] = "L"
                 grid[r][2] = "-"
@@ -95,5 +98,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
             else:
                 if place_in_mandatory_target(grid, "L"):
                     grid[r][2] = "-"
+
+    print_table(grid)
 
     return grid
