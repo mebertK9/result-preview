@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import (
     LoginManager, UserMixin,
     login_user, logout_user, login_required, current_user,
@@ -12,10 +12,11 @@ from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
 from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
+from data.util.rettungsgasse import init_grid, apply_action, to_rettungswagen
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
- 
+
 # ── Flask-Login setup ─────────────────────────────────────────────────────────
  
 login_manager = LoginManager(app)
@@ -159,6 +160,11 @@ def logout():
 def home():
     state = load_user_state(current_user.id, DEFAULT_TEAMS)
     hypothetical = state["hypothetical"]
+    grid = state["grid"]
+    print(f"grid: {grid}")
+    if(grid == {}):
+        print(f"grid is empty")
+        grid = init_grid()
 
     all_team_names = sorted({
         team for game in saison_25_26 for team in [game[0], game[1]]
@@ -281,13 +287,39 @@ def finalize_game(idx):
     return redirect('/')
 
 @app.route("/move", methods=["POST"])
+@login_required
 def move():
-    grid = session["grid"]
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     r = request.json["row"]
     s = request.json["action"]
-    grid = apply_action(grid, r, s)
-    session["grid"] = grid
-    return jsonify(to_rettungswagen(grid))
+    grid = state["grid"]
+    print(f"grid: {grid}")
+    if(grid == {}):
+        print("grid is empty")
+        grid = init_grid()
+    state["grid"] = apply_action(grid, r, s)
+    save_user_state(current_user.id, state)
+    return jsonify(to_rettungswagen(state["grid"]))
+
+@app.route("/reset", methods=["POST"])
+@login_required
+def reset():
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
+    state["grid"] = init_grid()
+    save_user_state(current_user.id, state)
+    return jsonify(to_rettungswagen(state["grid"]))
+    
+    #POST /move
+    #Content-Type: application/json
+    #
+    #{
+    #  "row": 2,
+    #  "action": "NS"
+    #}
+    #
+    #curl -X POST http://localhost:5000/move \
+    #  -H "Content-Type: application/json" \
+    #  -d '{"row": 2, "action": "NS"}'
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
