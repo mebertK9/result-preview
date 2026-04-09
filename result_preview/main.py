@@ -12,7 +12,7 @@ from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
 from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
-from data.util.rettungsgasse import init_grid, apply_action, to_rettungswagen
+from data.util.rettungsgasse import init_grid, apply_action, to_rettungswagen, ROWS
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
@@ -161,7 +161,6 @@ def home():
     state = load_user_state(current_user.id, DEFAULT_TEAMS)
     hypothetical = state["hypothetical"]
     grid = state["grid"]
-    print(f"grid: {grid}")
     if(grid == {}):
         print(f"grid is empty")
         grid = init_grid()
@@ -222,8 +221,20 @@ def home():
         if len(game) == 2 and game_visible(game)
     ]
 
+    LOEWEN = "BB Löwen Braunschweig"
+
+    # Build one game entry per grid row (None if no Löwen game in that row)
+    loewen_pending = [
+        {"idx": idx, "team1": game[0], "team2": game[1]}
+        for idx, game, _ in visible_pending        # your existing list
+        if LOEWEN in (game[0], game[1])
+    ]
+    # Pad to ROWS length with None
+    lion_games = loewen_pending + [None] * (ROWS - len(loewen_pending))
+
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
+                           lion_games=lion_games,
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,

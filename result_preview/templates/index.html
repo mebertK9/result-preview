@@ -392,29 +392,37 @@
             cb.addEventListener('change', saveScroll);
         });
     })();
-</script>
-
     <script src="/static/rettungsgasse.js"></script>
-
-    <!-- Mehrfach verwendbar mit unterschiedlichen IDs -->
-    <div id="game-alice"></div>
-    <div id="game-bob"></div>
+    <div id="game-loewen"></div>
 
     <script>
-      // Initialer Render (Jinja gibt das Grid als JSON rein)
-      const grid = {{ grid | tojson }};
-      renderRettungsgasse("game-alice", grid);
+      const grid      = {{ grid | tojson }};
+      const lionGames = {{ lion_games | tojson }};
 
-      // Nach jedem /move-Response einfach nochmal aufrufen – kein Rebuild
-      async function doMove(row, action) {
-        const res = await fetch("/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ row, action })
-        });
-        const rows = await res.json();
-        renderRettungsgasse("game-alice", rows);
-      }
+      renderRettungsgasse("game-loewen", grid, {
+        games: lionGames,
+        onAction: async function(gameIdx, rowIndex, action, score1, score2) {
+          // Optional: set the hypothetical score first
+          if (score1 !== null && score2 !== null) {
+            await fetch(`/set_score/${gameIdx}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: `score1=${score1}&score2=${score2}`
+            });
+          }
+          // Then apply the rettungsgasse move
+          const res = await fetch("/move", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ row: rowIndex, action: action })
+          });
+          const newRows = await res.json();
+          renderRettungsgasse("game-loewen", newRows, {
+            games: lionGames,
+            onAction: arguments.callee  // reuse same handler
+          });
+        }
+      });
     </script>
 </body>
 </html>

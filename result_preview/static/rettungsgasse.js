@@ -2,35 +2,36 @@
  * rettungsgasse.js
  *
  * Usage:
- *   renderRettungsgasse(containerId, rows)
+ *   renderRettungsgasse(containerId, rows, options)
  *
  * rows = output of to_rettungswagen(grid), e.g.:
  *   [[1,2], [0,3], [null,2], [1,null]]
  *
- * Each entry is [g_pos, l_pos] (0-3 or null if car absent).
- * rows[0] = row farthest from ambulance (top = closest to lion).
- * rows[N-1] = row nearest to ambulance (bottom).
- *
- * Can be called multiple times with the same containerId to update in place.
- * Can be called with different containerIds for multiple independent instances.
+ * options (optional):
+ *   {
+ *     games: [                  // one entry per row (null if no game for that row)
+ *       { idx: 3, team1: "BB Löwen Braunschweig", team2: "Opponent" },
+ *       null,
+ *       ...
+ *     ],
+ *     onAction: function(gameIdx, rowIndex, action, score1, score2) {}
+ *       // action = "S" (Löwen win) or "N" (Löwen lose)
+ *   }
  */
 
 (function () {
   const ROW_H = 72, CAR_W = 48, CAR_H = 58, SHOULDER_W = 80, ROAD_W = 160;
   const LION_H = 68, AMB_H = 60;
 
-  // x-position (left edge) for each column index 0-3
   const POS_X = [
-    SHOULDER_W / 2 - CAR_W / 2,                        // 0: left shoulder
-    SHOULDER_W + ROAD_W / 4 - CAR_W / 2,               // 1: left lane
-    SHOULDER_W + (3 * ROAD_W) / 4 - CAR_W / 2,         // 2: right lane
-    SHOULDER_W + ROAD_W + SHOULDER_W / 2 - CAR_W / 2,  // 3: right shoulder
+    SHOULDER_W / 2 - CAR_W / 2,
+    SHOULDER_W + ROAD_W / 4 - CAR_W / 2,
+    SHOULDER_W + (3 * ROAD_W) / 4 - CAR_W / 2,
+    SHOULDER_W + ROAD_W + SHOULDER_W / 2 - CAR_W / 2,
   ];
 
-  // Track siren timers per instance
   const sirenTimers = {};
 
-  /** Inject shared CSS once into the document head. */
   function injectStyles() {
     if (document.getElementById('rg-styles')) return;
     const style = document.createElement('style');
@@ -51,8 +52,8 @@
         display:flex;flex-direction:column;align-items:center;justify-content:center;
         transition:left 0.4s cubic-bezier(0.4,0,0.2,1);z-index:10;}
       .rg-car-left{background:#378ADD;}.rg-car-right{background:#D85A30;}
-      .rg-car-window{width:34px;height:14px;background:rgba(255,255,255,0.35);border-radius:3px;margin-bottom:4px;}
-      .rg-car-strip{width:34px;height:4px;background:rgba(0,0,0,0.12);border-radius:2px;}
+      .rg-car-right.has-game{cursor:pointer;outline:2.5px solid rgba(255,255,255,0.6);outline-offset:2px;}
+      .rg-car-right.has-game:active{transform:scale(0.93);}
       .rg-clear-ind{position:absolute;left:50%;top:0;bottom:0;transform:translateX(-50%);
         width:30px;border-left:2.5px dashed rgba(255,255,255,0.2);border-right:2.5px dashed rgba(255,255,255,0.2);
         pointer-events:none;transition:border-color 0.3s;z-index:5;}
@@ -75,21 +76,39 @@
         font-size:42px;position:relative;z-index:5;transition:font-size 0.3s;}
       .rg-prog-wrap{width:${ROAD_W + SHOULDER_W * 2}px;height:6px;background:#ddd;border-radius:3px;margin:8px 0 10px;overflow:hidden;}
       .rg-prog-fill{height:100%;background:#1D9E75;border-radius:3px;transition:width 0.4s ease;}
+
+      /* --- Game popup --- */
+      .rg-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.4);}
+      .rg-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1001;
+        background:#fff;border-radius:14px;padding:20px 18px 16px;width:min(310px,92vw);
+        font-family:Arial,sans-serif;box-shadow:0 6px 32px rgba(0,0,0,0.22);}
+      .rg-popup-label{font-size:0.73rem;color:#999;margin:0 0 3px;text-transform:uppercase;letter-spacing:0.05em;}
+      .rg-popup-teams{font-size:1rem;font-weight:bold;margin:0 0 14px;line-height:1.4;color:#222;}
+      .rg-popup-scores{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+      .rg-popup-scores input{width:58px;padding:9px 4px;font-size:1.1rem;text-align:center;
+        border:1px solid #bbb;border-radius:7px;-moz-appearance:textfield;}
+      .rg-popup-scores input::-webkit-outer-spin-button,
+      .rg-popup-scores input::-webkit-inner-spin-button{-webkit-appearance:none;}
+      .rg-popup-scores .rg-sep{font-weight:bold;font-size:1.2rem;color:#666;}
+      .rg-popup-btns{display:flex;gap:8px;align-items:stretch;}
+      .rg-popup-btns button{flex:1;padding:11px 8px;font-size:0.88rem;border:none;
+        border-radius:9px;cursor:pointer;font-weight:bold;line-height:1.3;}
+      .rg-btn-win{background:#1D9E75;color:#fff;}
+      .rg-btn-lose{background:#d94f4f;color:#fff;}
+      .rg-btn-cancel{flex:0 0 auto !important;padding:11px 14px !important;background:#ececec;color:#666;}
+      .rg-popup-hint{font-size:0.72rem;color:#bbb;margin:10px 0 0;text-align:center;}
     `;
     document.head.appendChild(style);
   }
 
-  /** Build the initial DOM structure inside the container. */
   function buildScaffold(container, prefix) {
     container.innerHTML = `
       <div class="rg-scene">
         <div class="rg-prog-wrap"><div class="rg-prog-fill" id="${prefix}-prog" style="width:0%"></div></div>
         <div class="rg-road-wrap">
-          <div class="rg-shoulder-l"></div>
-          <div class="rg-shoulder-r"></div>
+          <div class="rg-shoulder-l"></div><div class="rg-shoulder-r"></div>
           <div class="rg-road-bg"></div>
-          <div class="rg-road-edge-l"></div>
-          <div class="rg-road-edge-r"></div>
+          <div class="rg-road-edge-l"></div><div class="rg-road-edge-r"></div>
           <div class="rg-lane-marker"></div>
           <div class="rg-lion-row" id="${prefix}-lion">🦁</div>
           <div class="rg-rows-area" id="${prefix}-rows"></div>
@@ -103,21 +122,20 @@
       </div>`;
   }
 
-  /** Build all row elements from scratch. */
-  function buildRows(prefix, rows) {
+  function buildRows(prefix, rows, games, onAction) {
     const area = document.getElementById(`${prefix}-rows`);
     area.innerHTML = '';
+
     rows.forEach(([lp, rp], i) => {
       const div = document.createElement('div');
       div.className = 'rg-row';
       div.id = `${prefix}-row-${i}`;
 
-      const ov  = document.createElement('div'); ov.className  = 'rg-passed-overlay'; div.appendChild(ov);
-      const ci  = document.createElement('div'); ci.className  = 'rg-clear-ind';      div.appendChild(ci);
-      const rn  = document.createElement('div'); rn.className  = 'rg-row-num';
+      const ov = document.createElement('div'); ov.className = 'rg-passed-overlay'; div.appendChild(ov);
+      const ci = document.createElement('div'); ci.className = 'rg-clear-ind';      div.appendChild(ci);
+      const rn = document.createElement('div'); rn.className = 'rg-row-num';
       rn.textContent = rows.length - i; div.appendChild(rn);
 
-      // Left car (G) – only if position is not null
       if (lp !== null) {
         const lc = document.createElement('div');
         lc.className = 'rg-car rg-car-left';
@@ -127,13 +145,19 @@
         div.appendChild(lc);
       }
 
-      // Right car (L) – only if position is not null
       if (rp !== null) {
         const rc = document.createElement('div');
         rc.className = 'rg-car rg-car-right';
         rc.id = `${prefix}-cr-${i}`;
         rc.style.left = POS_X[rp] + 'px';
         rc.innerHTML = '<div class="rg-car-window"></div><div class="rg-car-strip"></div>';
+
+        const game = games && games[i];
+        if (game && onAction) {
+          rc.classList.add('has-game');
+          rc.addEventListener('click', () => openPopup(game, i, onAction));
+        }
+
         div.appendChild(rc);
       }
 
@@ -141,26 +165,75 @@
     });
   }
 
-  /**
-   * A row is clear for the ambulance when both sides are out of the way:
-   * - left car absent (null) or on shoulder (0)
-   * - right car absent (null) or on shoulder (3)
-   */
+  function openPopup(game, rowIndex, onAction) {
+    closePopup();
+
+    const LOEWEN = "BB Löwen Braunschweig";
+    const isHome = game.team1 === LOEWEN;
+    const opponent = isHome ? game.team2 : game.team1;
+    const homeLabel = isHome ? 'Löwen' : opponent;
+    const awayLabel = isHome ? opponent : 'Löwen';
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'rg-backdrop';
+    backdrop.id = 'rg-active-backdrop';
+    backdrop.addEventListener('click', closePopup);
+
+    const popup = document.createElement('div');
+    popup.className = 'rg-popup';
+    popup.addEventListener('click', e => e.stopPropagation());
+    popup.innerHTML = `
+      <p class="rg-popup-label">Spiel ${rowIndex + 1} – Ergebnis eintragen</p>
+      <p class="rg-popup-teams">${homeLabel} : ${awayLabel}</p>
+      <div class="rg-popup-scores">
+        <input type="number" id="rg-s1" inputmode="numeric" placeholder="–" min="0">
+        <span class="rg-sep">:</span>
+        <input type="number" id="rg-s2" inputmode="numeric" placeholder="–" min="0">
+      </div>
+      <div class="rg-popup-btns">
+        <button class="rg-btn-win"  id="rg-btn-win">🏆 Löwen gewinnen</button>
+        <button class="rg-btn-lose" id="rg-btn-lose">💀 Löwen verlieren</button>
+        <button class="rg-btn-cancel" id="rg-btn-cancel">✕</button>
+      </div>
+      <p class="rg-popup-hint">Ergebnis optional – Aktion bestimmt die Richtung</p>
+    `;
+
+    popup.querySelector('#rg-btn-cancel').addEventListener('click', closePopup);
+
+    popup.querySelector('#rg-btn-win').addEventListener('click', () => {
+      const s1 = popup.querySelector('#rg-s1').value;
+      const s2 = popup.querySelector('#rg-s2').value;
+      closePopup();
+      onAction(game.idx, rowIndex, 'S', s1 || null, s2 || null);
+    });
+
+    popup.querySelector('#rg-btn-lose').addEventListener('click', () => {
+      const s1 = popup.querySelector('#rg-s1').value;
+      const s2 = popup.querySelector('#rg-s2').value;
+      closePopup();
+      onAction(game.idx, rowIndex, 'N', s1 || null, s2 || null);
+    });
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(popup);
+    popup.querySelector('#rg-s1').focus();
+  }
+
+  function closePopup() {
+    document.getElementById('rg-active-backdrop')?.remove();
+    document.querySelector('.rg-popup')?.remove();
+  }
+
   function isClear(lp, rp) {
     return (lp === null || lp === 0) && (rp === null || rp === 3);
   }
 
-  /**
-   * Calculate how far the ambulance can advance.
-   * Count consecutive clear rows from the bottom (index rows.length-1 upward).
-   * Returns -1 if the bottom row is blocked (ambulance hasn't moved at all).
-   */
   function calcAmbAt(rows) {
     let ambAt = -1;
     for (let i = rows.length - 1; i >= 0; i--) {
       const [lp, rp] = rows[i];
       if (isClear(lp, rp)) {
-        ambAt = rows.length - 1 - i; // distance from bottom
+        ambAt = rows.length - 1 - i;
       } else {
         break;
       }
@@ -168,7 +241,6 @@
     return ambAt;
   }
 
-  /** Update car positions and overlays without rebuilding DOM. */
   function updateRows(prefix, rows, ambAt) {
     rows.forEach(([lp, rp], i) => {
       const rowFromBottom = rows.length - 1 - i;
@@ -188,15 +260,13 @@
     });
   }
 
-  /** Calculate the CSS top value for the ambulance element. */
   function ambTopPx(ambAt, totalRows) {
-    if (ambAt < 0)          return totalRows * ROW_H - AMB_H / 2 + 8; // waiting below all rows
-    if (ambAt >= totalRows) return -AMB_H + 8;                          // past all rows (at lion)
+    if (ambAt < 0)          return totalRows * ROW_H - AMB_H / 2 + 8;
+    if (ambAt >= totalRows) return -AMB_H + 8;
     const rowIdx = totalRows - 1 - ambAt;
     return rowIdx * ROW_H + (ROW_H - AMB_H) / 2;
   }
 
-  /** Start or restart the siren blink for this instance. */
   function startSiren(prefix) {
     clearInterval(sirenTimers[prefix]);
     const siren = document.getElementById(`${prefix}-siren`);
@@ -208,26 +278,30 @@
   }
 
   /**
-   * Public API – render or update a rettungsgasse widget.
+   * Public API.
    *
-   * @param {string} containerId - ID of the host element
-   * @param {Array}  rows        - output of to_rettungswagen(grid)
+   * @param {string} containerId
+   * @param {Array}  rows      - output of to_rettungswagen(grid)
+   * @param {Object} [options]
+   * @param {Array}  [options.games]    - per-row game objects ({idx, team1, team2}) or null
+   * @param {Function} [options.onAction] - callback(gameIdx, rowIndex, action, score1, score2)
    */
-  window.renderRettungsgasse = function (containerId, rows) {
+  window.renderRettungsgasse = function (containerId, rows, options) {
+    options = options || {};
     injectStyles();
 
     const container = document.getElementById(containerId);
     if (!container) { console.error('renderRettungsgasse: container not found:', containerId); return; }
 
-    // Use container ID as prefix to keep all IDs unique across instances
-    const prefix = containerId;
-    const isFirstRender = !container.querySelector('.rg-scene');
+    const prefix   = containerId;
+    const games    = options.games    || null;
+    const onAction = options.onAction || null;
+    const isFirst  = !container.querySelector('.rg-scene');
 
-    if (isFirstRender) {
+    if (isFirst) {
       buildScaffold(container, prefix);
-      buildRows(prefix, rows);
+      buildRows(prefix, rows, games, onAction);
 
-      // Set ambulance layer height
       const layer = document.getElementById(`${prefix}-amb-layer`);
       layer.style.top    = LION_H + 'px';
       layer.style.height = (rows.length * ROW_H + AMB_H) + 'px';
@@ -236,20 +310,17 @@
     }
 
     const ambAt = calcAmbAt(rows);
-
     updateRows(prefix, rows, ambAt);
 
-    // Position ambulance
     const amb = document.getElementById(`${prefix}-amb`);
     if (amb) amb.style.top = ambTopPx(ambAt, rows.length) + 'px';
 
-    // Progress bar: fraction of rows the ambulance has passed
     const progress = ambAt < 0 ? 0 : Math.min(ambAt / rows.length, 1);
     const prog = document.getElementById(`${prefix}-prog`);
     if (prog) prog.style.width = (progress * 100) + '%';
 
-    // Lion pulse when ambulance reaches the end
     const lion = document.getElementById(`${prefix}-lion`);
     if (lion) lion.style.fontSize = (ambAt >= rows.length) ? '56px' : '42px';
   };
+
 })();
