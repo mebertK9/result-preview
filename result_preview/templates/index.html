@@ -393,5 +393,28 @@
         });
     })();
 </script>
+
+    <script src="/static/rettungsgasse.js"></script>
+
+    <!-- Mehrfach verwendbar mit unterschiedlichen IDs -->
+    <div id="game-alice"></div>
+    <div id="game-bob"></div>
+
+    <script>
+      // Initialer Render (Jinja gibt das Grid als JSON rein)
+      const grid = {{ grid | tojson }};
+      renderRettungsgasse("game-alice", grid);
+
+      // Nach jedem /move-Response einfach nochmal aufrufen – kein Rebuild
+      async function doMove(row, action) {
+        const res = await fetch("/move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ row, action })
+        });
+        const rows = await res.json();
+        renderRettungsgasse("game-alice", rows);
+      }
+    </script>
 </body>
 </html>

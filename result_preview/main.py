@@ -223,6 +223,7 @@ def home():
     ]
 
     return render_template('index.html',
+                           grid=to_rettungswagen(grid),
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
