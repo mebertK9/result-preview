@@ -372,7 +372,6 @@
     </details>
 
 <script>
-    // Remember scroll position and restore after reload
     (function () {
         var savedY = sessionStorage.getItem('scrollY');
         if (savedY !== null) {
@@ -392,37 +391,40 @@
             cb.addEventListener('change', saveScroll);
         });
     })();
-    <script src="/static/rettungsgasse.js"></script>
-    <div id="game-loewen"></div>
 </script>
-    <script>
-      const grid      = {{ grid | tojson }};
-      const lionGames = {{ lion_games | tojson }};
 
-      renderRettungsgasse("game-loewen", grid, {
-        games: lionGames,
-        onAction: async function(gameIdx, rowIndex, action, score1, score2) {
-          // Optional: set the hypothetical score first
-          if (score1 !== null && score2 !== null) {
-            await fetch(`/set_score/${gameIdx}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/x-www-form-urlencoded" },
-              body: `score1=${score1}&score2=${score2}`
-            });
-          }
-          // Then apply the rettungsgasse move
-          const res = await fetch("/move", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ row: rowIndex, action: action })
-          });
-          const newRows = await res.json();
-          renderRettungsgasse("game-loewen", newRows, {
-            games: lionGames,
-            onAction: arguments.callee  // reuse same handler
-          });
-        }
+<script src="/static/rettungsgasse.js"></script>
+<div id="game-loewen"></div>
+
+<script>
+  const grid      = {{ grid | tojson }};
+  const lionGames = {{ lion_games | tojson }};
+
+  renderRettungsgasse("game-loewen", grid, {
+    games: lionGames,
+    onAction: async function(gameIdx, rowIndex, action, score1, score2) {
+      if (score1 !== null && score2 !== null) {
+        await fetch(`/set_score/${gameIdx}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `score1=${score1}&score2=${score2}`
+        });
+      }
+      const res = await fetch("/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ row: rowIndex, action: action })
       });
-    </script>
+      const newRows = await res.json();
+      const handler = arguments.callee;
+      renderRettungsgasse("game-loewen", newRows, {
+        games: lionGames,
+        onAction: handler
+      });
+    }
+  });
+</script>
+</body>
+</html>
 </body>
 </html>
