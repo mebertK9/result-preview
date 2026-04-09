@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Result Preview",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/result_preview/main.py",
+            "cwd": "${workspaceFolder}/result_preview",
+            "envFile": "${workspaceFolder}/.env",
+            "preLaunchTask": "Install Python requirements",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
