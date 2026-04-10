@@ -213,6 +213,8 @@
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
     
+    <div id="game-loewen"></div>
+
     <details>
         <summary>Auswahl Teams</summary>
         <h2>Spiele anzeigen für...</h2>
@@ -233,6 +235,8 @@
         </form>
     </details>
     
+    <details>
+        <summary>Kalkulator</summary>
     <h2>Ausstehende Spiele</h2>
     <div class="table-wrap">
     <table>
@@ -272,6 +276,7 @@
         {% endfor %}
     </table>
     </div>
+    </details>
 
     {% if direct_standings %}
     <h2>Direkter Vergleich</h2>
@@ -303,52 +308,55 @@
     </div>
     {% endif %}
 
-    <h2>Gesamttabelle</h2>
-    <form method="GET" id="compareForm">
-        {% for t in selected_teams %}
-        <input type="hidden" name="teams" value="{{t}}">
-        {% endfor %}
-        <div class="table-wrap">
-        <table>
-            <tr>
-                <th>#</th>
-                <th title="Direkter Vergleich">DV</th>
-                <th>Team</th>
-                <th>Sp</th>
-                <th>S</th>
-                <th>Pkt</th>
-                <th>K+</th>
-                <th>K−</th>
-                <th>Diff</th>
-            </tr>
-            {% for name, stats in full_standings %}
-            {% set in_compare = name.name in compare_teams %}
-            {% set in_selected = name.name in selected_teams %}
-            {% set hcount = hypo_count.get(name.name, 0) %}
-            <tr class="{% if in_compare %}compare-row{% elif hcount %}hypo-team{% endif %}">
-                <td>{{loop.index}}</td>
-                <td style="text-align:center">
-                    <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
-                           {% if in_compare %}checked{% endif %}
-                           onchange="this.form.submit()">
-                </td>
-                <td class="team-name {% if in_selected %}bold{% endif %}">
-                    {{ sn(name.name) }}
-                </td>
-                <td>{{stats.games}}{% if hcount %} <span class="hypo-badge">({{hcount}})</span>{% endif %}</td>
-                {% set hwins = hypo_wins.get(name.name, 0) %}
-                <td>{{stats.wins}}{% if hwins %} <span class="hypo-badge">({{hwins}})</span>{% endif %}</td>
-                <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
-                <td>{{stats.points}}</td>
-                <td>{{stats.against}}</td>
-                <td>{{stats.point_diff()}}</td>
-            </tr>
+    <details>
+        <summary>Tabellenvorschau</summary>
+        <h2>Gesamttabelle</h2>
+        <form method="GET" id="compareForm">
+            {% for t in selected_teams %}
+            <input type="hidden" name="teams" value="{{t}}">
             {% endfor %}
-        </table>
-        </div>
-    </form>
-
-
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>#</th>
+                        <th title="Direkter Vergleich">DV</th>
+                        <th>Team</th>
+                        <th>Sp</th>
+                        <th>S</th>
+                        <th>Pkt</th>
+                        <th>K+</th>
+                        <th>K−</th>
+                        <th>Diff</th>
+                    </tr>
+                    {% for name, stats in full_standings %}
+                    {% set in_compare = name.name in compare_teams %}
+                    {% set in_selected = name.name in selected_teams %}
+                    {% set hcount = hypo_count.get(name.name, 0) %}
+                    <tr class="{% if in_compare %}compare-row{% elif hcount %}hypo-team{% endif %}">
+                        <td>{{loop.index}}</td>
+                        <td style="text-align:center">
+                            <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
+                            {% if in_compare %}checked{% endif %}
+                            onchange="this.form.submit()">
+                        </td>
+                        <td class="team-name {% if in_selected %}bold{% endif %}">
+                            {{ sn(name.name) }}
+                        </td>
+                        <td>{{stats.games}}{% if hcount %} <span class="hypo-badge">({{hcount}})</span>{% endif %}</td>
+                        {% set hwins = hypo_wins.get(name.name, 0) %}
+                        <td>{{stats.wins}}{% if hwins %} <span class="hypo-badge">({{hwins}})</span>{% endif %}</td>
+                        <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+                        <td>{{stats.points}}</td>
+                        <td>{{stats.against}}</td>
+                        <td>{{stats.point_diff()}}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </form>
+    </details>
+        
+        
     <details>
       <summary>Alle Ergebnisse</summary>
 
@@ -395,7 +403,6 @@
 
 <script src="/static/rettungsgasse.js"></script>
 
-<div id="game-loewen"></div>
 
 <script>
   const grid      = {{ grid | tojson }};
