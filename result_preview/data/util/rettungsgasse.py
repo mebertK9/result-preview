@@ -106,6 +106,4 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
                 if place_in_mandatory_target(grid, "L"):
                     grid[r][2] = "-"
 
-    print_table(grid)
-
     return grid
