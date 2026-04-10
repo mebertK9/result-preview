@@ -4,18 +4,27 @@
  * Usage:
  *   renderRettungsgasse(containerId, rows, options)
  *
- * rows = output of to_rettungswagen(grid), e.g.:
- *   [[1,2], [0,3], [null,2], [1,null]]
+ * rows = array of rows, each row is an array of car objects:
+ *   [
+ *     [{ lane: 1, side: "left", gameIdx: 5 }, { lane: 2, side: "right", gameIdx: 5 }],
+ *     [{ lane: 0, side: "right", gameIdx: 3 }, { lane: 3, side: "right", gameIdx: 7 }],
+ *     [],
+ *     ...
+ *   ]
+ *
+ * Car object fields:
+ *   lane    {0|1|2|3}   - position on road
+ *   side    {"left"|"right"} - determines car color (left=blue, right=orange)
+ *   gameIdx {number|null}   - index into options.games; null if no game
  *
  * options (optional):
  *   {
- *     games: [                  // one entry per row (null if no game for that row)
- *       { idx: 3, team1: "BB Löwen Braunschweig", team2: "Opponent" },
- *       null,
+ *     games: [                  // lookup by gameIdx
+ *       { team1: "BB Löwen Braunschweig", team2: "Opponent" },
  *       ...
  *     ],
- *     onAction: function(gameIdx, rowIndex, action, score1, score2) {}
- *       // action = "S" (Löwen win) or "N" (Löwen lose)
+ *     hypotheticals: {},        // keyed by gameIdx: [score1, score2]
+ *     onAction: function(gameIdx, score1, score2) {}
  *   }
  */
 
@@ -52,8 +61,8 @@
         display:flex;flex-direction:column;align-items:center;justify-content:center;
         transition:left 0.4s cubic-bezier(0.4,0,0.2,1);z-index:10;}
       .rg-car-left{background:#378ADD;}.rg-car-right{background:#D85A30;}
-      .rg-car-right.has-game{cursor:pointer;outline:2.5px solid rgba(255,255,255,0.6);outline-offset:2px;}
-      .rg-car-right.has-game:active{transform:scale(0.93);}
+      .rg-car.has-game{cursor:pointer;outline:2.5px solid rgba(255,255,255,0.6);outline-offset:2px;}
+      .rg-car.has-game:active{transform:scale(0.93);}
       .rg-clear-ind{position:absolute;left:50%;top:0;bottom:0;transform:translateX(-50%);
         width:30px;border-left:2.5px dashed rgba(255,255,255,0.2);border-right:2.5px dashed rgba(255,255,255,0.2);
         pointer-events:none;transition:border-color 0.3s;z-index:5;}
@@ -93,8 +102,7 @@
       .rg-popup-btns{display:flex;gap:8px;align-items:stretch;}
       .rg-popup-btns button{flex:1;padding:11px 8px;font-size:0.88rem;border:none;
         border-radius:9px;cursor:pointer;font-weight:bold;line-height:1.3;}
-      .rg-btn-win{background:#1D9E75;color:#fff;}
-      .rg-btn-lose{background:#d94f4f;color:#fff;}
+      .rg-btn-commit{background:#1D9E75;color:#fff;}
       .rg-btn-cancel{flex:0 0 auto !important;padding:11px 14px !important;background:#ececec;color:#666;}
       .rg-popup-hint{font-size:0.72rem;color:#bbb;margin:10px 0 0;text-align:center;}
     `;
@@ -122,11 +130,28 @@
       </div>`;
   }
 
-  function buildRows(prefix, rows, games, hypotheticals, onAction) {
+  /**
+   * Builds (or rebuilds) all row DOM elements.
+   * Called on every render to support cars moving between rows.
+   *
+   * @param {string}   prefix
+   * @param {Array}    rows          - array of car-object arrays
+   * @param {Array}    games         - lookup by gameIdx
+   * @param {Array}    compGames     - lookup by compGameIdx
+   * @param {Object}   hypotheticals - keyed by gameIdx: [score1, score2]
+   * @param {Function} onAction      - callback(gameIdx, score1, score2)
+   */
+  function buildRows(prefix, rows, games, compGames, hypotheticals, onAction, comptetior) {
     const area = document.getElementById(`${prefix}-rows`);
     area.innerHTML = '';
 
-    rows.forEach(([lp, rp], i) => {
+    console.log("games:", games)
+    console.log(comptetior, "mbc-games", compGames)
+    console.log("rows:", rows)
+    console.log("hypos", hypotheticals)
+    console.log("#################")
+
+    rows.forEach((cars, i) => {
       const div = document.createElement('div');
       div.className = 'rg-row';
       div.id = `${prefix}-row-${i}`;
@@ -136,37 +161,56 @@
       const rn = document.createElement('div'); rn.className = 'rg-row-num';
       rn.textContent = rows.length - i; div.appendChild(rn);
 
-      if (lp !== null) {
-        const lc = document.createElement('div');
-        lc.className = 'rg-car rg-car-left';
-        lc.id = `${prefix}-cl-${i}`;
-        lc.style.left = POS_X[lp] + 'px';
-        lc.innerHTML = '<div class="rg-car-window"></div><div class="rg-car-strip"></div>';
-        div.appendChild(lc);
-      }
+      // [
+        // {"lane": 0, "type": "right", "gameIdx": 3},
+      //   {"lane": 3, "type": "right", "gameIdx": 7}
+      // ]
+      // TODO rg-car-left und rg-cat-right nach rg-car-lion und rg-car-opponent umbennen - type entsprechend
 
-      if (rp !== null) {
-        const rc = document.createElement('div');
-        rc.className = 'rg-car rg-car-right';
-        rc.id = `${prefix}-cr-${i}`;
-        rc.style.left = POS_X[rp] + 'px';
-        rc.innerHTML = '<div class="rg-car-window"></div><div class="rg-car-strip"></div>';
+      // Each car in this row gets its own element, keyed by its index within the row
+      cars.filter((c) => c.type).forEach((car, j) => {
+        const el = document.createElement('div');
+        el.className = `rg-car rg-car-${car.type}`;
+        el.id = `${prefix}-car-${i}-${j}`;
+        el.style.left = POS_X[car.lane] + 'px';
+        el.innerHTML = '<div class="rg-car-window"></div><div class="rg-car-strip"></div>';
 
-        const game = games && games[i];
-        const hypothetical = hypotheticals && hypotheticals[game?.idx];
+        console.log("car:", car, "row/i:", i)
+        console.log("lion game:", games[i])
+        console.log("mgc game:", compGames[i])
+        
+        var game = null;
+        var team = null;
+        if(car.type == "right") {
+          game = games && games[i];
+          team = "BB Löwen Braunschweig";
+        } else if( car.type == "left") {
+          game = compGames && compGames[i];
+          team = comptetior;
+        }
+         const hypothetical = hypotheticals && hypotheticals[game?.idx];
+         console.log("selected game:", game)
         if (game && onAction) {
-          rc.classList.add('has-game');
-          rc.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction));
+          el.classList.add('has-game');
+          el.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction, team));
         }
 
-        div.appendChild(rc);
-      }
+        div.appendChild(el);
+      });
 
       area.appendChild(div);
     });
   }
 
-  function openPopup(game, hypothetical, rowIndex, onAction) {
+  /**
+   * Opens the score-entry popup for a single car's game.
+   *
+   * @param {Object}   game         - { team1, team2 }
+   * @param {Array}    hypothetical - [score1, score2] or null
+   * @param {number}   gameIdx
+   * @param {Function} onAction     - callback(gameIdx, rowIndex, score1, score2)
+   */
+  function openPopup(game, hypothetical, rowIndex, onAction, team) {
     closePopup();
 
     const LOEWEN = "BB Löwen Braunschweig";
@@ -184,7 +228,7 @@
     popup.className = 'rg-popup';
     popup.addEventListener('click', e => e.stopPropagation());
     popup.innerHTML = `
-      <p class="rg-popup-label">Spiel ${rowIndex + 1} – Ergebnis eintragen</p>
+      <p class="rg-popup-label">Ergebnis eintragen</p>
       <p class="rg-popup-teams">${homeLabel} : ${awayLabel}</p>
       <div class="rg-popup-scores">
         <input type="number" id="rg-s1" inputmode="numeric" value="${hypothetical ? hypothetical[0] : ''}" placeholder="–" min="0">
@@ -192,27 +236,19 @@
         <input type="number" id="rg-s2" inputmode="numeric" value="${hypothetical ? hypothetical[1] : ''}" placeholder="–" min="0">
       </div>
       <div class="rg-popup-btns">
-        <button class="rg-btn-win"  id="rg-btn-win">🏆 Löwen gewinnen</button>
-        <button class="rg-btn-lose" id="rg-btn-lose">💀 Löwen verlieren</button>
+        <button class="rg-btn-commit" id="rg-btn-commit">✔ Ergebnis bestätigen</button>
         <button class="rg-btn-cancel" id="rg-btn-cancel">✕</button>
       </div>
-      <p class="rg-popup-hint">Ergebnis optional – Aktion bestimmt die Richtung</p>
+      <p class="rg-popup-hint">Ergebnis optional</p>
     `;
 
     popup.querySelector('#rg-btn-cancel').addEventListener('click', closePopup);
 
-    popup.querySelector('#rg-btn-win').addEventListener('click', () => {
+    popup.querySelector('#rg-btn-commit').addEventListener('click', () => {
       const s1 = popup.querySelector('#rg-s1').value;
       const s2 = popup.querySelector('#rg-s2').value;
       closePopup();
-      onAction(game.idx, rowIndex, 'S', s1 || null, s2 || null);
-    });
-
-    popup.querySelector('#rg-btn-lose').addEventListener('click', () => {
-      const s1 = popup.querySelector('#rg-s1').value;
-      const s2 = popup.querySelector('#rg-s2').value;
-      closePopup();
-      onAction(game.idx, rowIndex, 'N', s1 || null, s2 || null);
+      onAction(game, rowIndex, s1 || null, s2 || null, team);
     });
 
     document.body.appendChild(backdrop);
@@ -225,15 +261,16 @@
     document.querySelector('.rg-popup')?.remove();
   }
 
-  function isClear(lp, rp) {
-    return (lp === null || lp === 0) && (rp === null || rp === 3);
+  /** A row is clear for the ambulance if no car occupies lanes 1 or 2. */
+  function isClear(cars) {
+    return cars.length < 2 || cars.every(c => c.lane === 0 || c.lane === 3);
   }
 
+  /** Returns how many rows from the bottom the ambulance has cleared. */
   function calcAmbAt(rows) {
     let ambAt = -1;
     for (let i = rows.length - 1; i >= 0; i--) {
-      const [lp, rp] = rows[i];
-      if (isClear(lp, rp)) {
+      if (isClear(rows[i])) {
         ambAt = rows.length - 1 - i;
       } else {
         break;
@@ -242,16 +279,12 @@
     return ambAt;
   }
 
+  /** Updates overlays and clear-gap indicators after rows have been built. */
   function updateRows(prefix, rows, ambAt) {
-    rows.forEach(([lp, rp], i) => {
+    rows.forEach((cars, i) => {
       const rowFromBottom = rows.length - 1 - i;
       const passed = rowFromBottom < ambAt;
-      const clear  = isClear(lp, rp);
-
-      const lc = document.getElementById(`${prefix}-cl-${i}`);
-      const rc = document.getElementById(`${prefix}-cr-${i}`);
-      if (lc && lp !== null) lc.style.left = POS_X[lp] + 'px';
-      if (rc && rp !== null) rc.style.left = POS_X[rp] + 'px';
+      const clear  = isClear(cars);
 
       const rowEl = document.getElementById(`${prefix}-row-${i}`);
       if (rowEl) {
@@ -282,10 +315,12 @@
    * Public API.
    *
    * @param {string} containerId
-   * @param {Array}  rows      - output of to_rettungswagen(grid)
+   * @param {Array}  rows      - array of rows; each row is an array of car objects
+   *                            { lane: 0|1|2|3, side: "left"|"right", gameIdx: number|null }
    * @param {Object} [options]
-   * @param {Array}  [options.games]    - per-row game objects ({idx, team1, team2}) or null
-   * @param {Function} [options.onAction] - callback(gameIdx, rowIndex, action, score1, score2)
+   * @param {Array}  [options.games]         - lookup array by gameIdx: { team1, team2 }
+   * @param {Object} [options.hypotheticals] - keyed by gameIdx: [score1, score2]
+   * @param {Function} [options.onAction]    - callback(gameIdx, rowIndex, score1, score2)
    */
   window.renderRettungsgasse = function (containerId, rows, options) {
     options = options || {};
@@ -294,22 +329,24 @@
     const container = document.getElementById(containerId);
     if (!container) { console.error('renderRettungsgasse: container not found:', containerId); return; }
 
-    const prefix   = containerId;
-    const games    = options.games    || null;
+    const prefix        = containerId;
+    const games         = options.games         || null;
+    const compGames     = options.competitor_games|| null;
+    const competitor    = options.competitor;
     const hypotheticals = options.hypotheticals || null;
-    const onAction = options.onAction || null;
-    const isFirst  = !container.querySelector('.rg-scene');
+    const onAction      = options.onAction      || null;
+    const isFirst       = !container.querySelector('.rg-scene');
 
     if (isFirst) {
       buildScaffold(container, prefix);
-      buildRows(prefix, rows, games, hypotheticals, onAction);
-
       const layer = document.getElementById(`${prefix}-amb-layer`);
       layer.style.top    = LION_H + 'px';
       layer.style.height = (rows.length * ROW_H + AMB_H) + 'px';
-
       startSiren(prefix);
     }
+
+    // Always rebuild rows so cars can appear/disappear across rows
+    buildRows(prefix, rows, games, compGames, hypotheticals, onAction, competitor);
 
     const ambAt = calcAmbAt(rows);
     updateRows(prefix, rows, ambAt);

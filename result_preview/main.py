@@ -9,7 +9,7 @@ from werkzeug.security import check_password_hash
  
 from models.team import Team
 from models.team_stats import TeamStats
-from data.games import saison_25_26
+from data.games import saison_25_26, LOEWEN, COMPETITORS
 from data.users import USERS, ADMIN_USER
 from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
 from data.util.rettungsgasse import init_grid, apply_action, to_rettungswagen, ROWS
@@ -221,8 +221,6 @@ def home():
         if len(game) == 2 and game_visible(game)
     ]
 
-    LOEWEN = "BB Löwen Braunschweig"
-
     # Build one game entry per grid row (None if no Löwen game in that row)
     loewen_pending = [
         {"idx": idx, "team1": game[0], "team2": game[1]}
@@ -232,9 +230,22 @@ def home():
     # Pad to ROWS length with None
     lion_games = loewen_pending + [None] * (ROWS - len(loewen_pending))
 
+    all_competitor_games = {
+        competitor: list(reversed((
+            [
+                {"idx": idx, "team1": game[0], "team2": game[1]}
+                for idx, game, _ in visible_pending
+                if competitor in (game[0], game[1])
+            ]
+            + [None] * ROWS
+        )[:ROWS]))
+        for competitor in COMPETITORS
+}
+
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
                            lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
+                           all_competitor_games = all_competitor_games,
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
@@ -301,17 +312,53 @@ def finalize_game(idx):
 @app.route("/move", methods=["POST"])
 @login_required
 def move():
-    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     r = request.json["row"]
-    s = request.json["action"]
+    game = request.json["game"]
+    team = request.json["team"]
+    score1 = request.json["score1"]
+    score2 = request.json["score2"]
+
+    team1 = game["team1"]
+    team2 = game["team2"]
+
+    if LOEWEN == team:
+        lion_or_gegner = "L"
+    elif team in (team1, team2):
+        lion_or_gegner = "G"
+    else:
+        lion_or_gegner = ""
+
+    action = _get_action(team1, team, score1, score2)
+
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
     grid = state["grid"]
     if(grid == {}):
         print("grid is empty")
         grid = init_grid()
-    state["grid"] = apply_action(grid, r, "L", s)
+    state["grid"] = apply_action(grid, r, lion_or_gegner, action)
+
     save_user_state(current_user.id, state)
-    val = to_rettungswagen(state["grid"])
-    return jsonify(val)
+    return jsonify(to_rettungswagen(state["grid"]))
+
+def _get_action(team1, team, score1, score2) -> str:
+    if(score1 == None or score2 == None):
+        return ""
+    
+    action=""    
+    home_won = int(score1) > int (score2)
+    if(team == team1):
+        if(home_won):
+            action = "S"
+        else:
+            action = "N"
+    else:
+        if(home_won):
+            action = "N"
+        else:
+            action = "S"
+
+    
+    return action
 
 @app.route("/reset", methods=["POST"])
 @login_required
@@ -320,18 +367,7 @@ def reset():
     state["grid"] = init_grid()
     save_user_state(current_user.id, state)
     return jsonify(to_rettungswagen(state["grid"]))
-    
-    #POST /move
-    #Content-Type: application/json
-    #
-    #{
-    #  "row": 2,
-    #  "action": "NS"
-    #}
-    #
-    #curl -X POST http://localhost:5000/move \
-    #  -H "Content-Type: application/json" \
-    #  -d '{"row": 2, "action": "NS"}'
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)

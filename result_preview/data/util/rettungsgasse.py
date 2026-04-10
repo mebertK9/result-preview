@@ -4,7 +4,6 @@ ROWS = 7
 COLS = 4
 MANDATORY_ROWS = 5   # Reihen mit G und L
 
-
 def print_table(grid):
     print()
     for r in range(ROWS):
@@ -24,22 +23,30 @@ def place_in_mandatory_target(grid, token) -> bool:
             return True
     return False
 
-def to_rettungswagen(grid: list[list[str]]) -> list[tuple[int | None, int | None]]:
-    """
-    Transforms the internal grid representation into a list of (left_pos, right_pos) tuples.
+def to_rettungswagen(grid: list[list[str]]) -> list[list[dict]]:
 
-    Grid columns: 0=left shoulder, 1=left lane, 2=right lane, 3=right shoulder
-    Car identifiers: "G" = left car, "L" = right car
+    # for row in grid:
+    #     g_pos = row.index("G") if "G" in row else None
+    #     l_pos = row.index("L") if "L" in row else None
+    #     result.append((g_pos, l_pos))
 
-    Position is None if the car is not present in that row (no car drawn).
-    Returns a list of (G_position, L_position) per row.
-    """
-    result = []
+    rows = []
     for row in grid:
-        g_pos = row.index("G") if "G" in row else None
-        l_pos = row.index("L") if "L" in row else None
-        result.append((g_pos, l_pos))
-    return list(reversed(result))  # reverse to have most recent game at the end
+        cars = []
+        for i, gl_char in enumerate(row):
+            type = None
+            if(gl_char == "G"):
+                type = "left"
+            elif(gl_char == "L"):
+                type = "right"
+            cars.append({
+                "lane": i,
+                "type": type
+            })
+        
+        rows.append(cars)
+  
+    return list(reversed(rows))  # reverse to have most recent game at the end
 
 def init_grid() -> list[list[str]]:
     """Creates and returns the initial grid state."""
@@ -63,7 +70,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
       G: N = move left (col 1 -> 0), S = move to mandatory target
       L: S = move right (col 2 -> 3), N = move to mandatory target
     """
-    if kind not in ("G", "L") or s not in ("S", "N"):
+    if kind not in ("G", "L") or s not in ("S", "N", ""):
         raise ValueError(f"Invalid car type (kind) or action: kind={kind}, s={s}")
 
     if r < MANDATORY_ROWS:
