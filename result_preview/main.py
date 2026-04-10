@@ -224,7 +224,7 @@ def home():
     # Build one game entry per grid row (None if no Löwen game in that row)
     loewen_pending = [
         {"idx": idx, "team1": game[0], "team2": game[1]}
-        for idx, game, _ in visible_pending        # your existing list
+        for idx, game, in enumerate(pending_games)
         if LOEWEN in (game[0], game[1])
     ]
     # Pad to ROWS length with None
@@ -234,7 +234,7 @@ def home():
         competitor: list(reversed((
             [
                 {"idx": idx, "team1": game[0], "team2": game[1]}
-                for idx, game, _ in visible_pending
+                for idx, game, in enumerate(pending_games)
                 if competitor in (game[0], game[1])
             ]
             + [None] * ROWS
