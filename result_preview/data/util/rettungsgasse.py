@@ -79,7 +79,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
             if action_g == "N":
                 grid[r][0] = "G"
                 grid[r][1] = "-"
-            else:
+            elif (action_g == "S"):
                 if place_in_mandatory_target(grid, "G"):
                     grid[r][1] = "-"
 
@@ -87,7 +87,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
             if action_l == "S":
                 grid[r][3] = "L"
                 grid[r][2] = "-"
-            else:
+            elif(action_l == "N"):
                 if place_in_mandatory_target(grid, "L"):
                     grid[r][2] = "-"
     else:
@@ -95,7 +95,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
             if s == "S":
                 grid[r][3] = "L"
                 grid[r][2] = "-"
-            else:
+            elif(s == "N"):
                 if place_in_mandatory_target(grid, "L"):
                     grid[r][2] = "-"
 
