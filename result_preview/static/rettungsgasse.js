@@ -175,10 +175,6 @@
         el.style.left = POS_X[car.lane] + 'px';
         el.innerHTML = '<div class="rg-car-window"></div><div class="rg-car-strip"></div>';
 
-        console.log("car:", car, "row/i:", i)
-        console.log("lion game:", games[i])
-        console.log("mgc game:", compGames[i])
-        
         var game = null;
         var team = null;
         if(car.type == "right") {
@@ -213,11 +209,10 @@
   function openPopup(game, hypothetical, rowIndex, onAction, team) {
     closePopup();
 
-    const LOEWEN = "BB Löwen Braunschweig";
-    const isHome = game.team1 === LOEWEN;
+    const isHome = game.team1 === team;
     const opponent = isHome ? game.team2 : game.team1;
-    const homeLabel = isHome ? 'Löwen' : opponent;
-    const awayLabel = isHome ? opponent : 'Löwen';
+    const homeLabel = isHome ? team : opponent;
+    const awayLabel = isHome ? opponent : team;
 
     const backdrop = document.createElement('div');
     backdrop.className = 'rg-backdrop';
