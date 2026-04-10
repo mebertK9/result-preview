@@ -258,7 +258,7 @@
 
   /** A row is clear for the ambulance if no car occupies lanes 1 or 2. */
   function isClear(cars) {
-    return cars.length < 2 || cars.every(c => c.lane === 0 || c.lane === 3);
+    return cars.filter(c => c.type).every(c => c.lane === 0 || c.lane === 3);
   }
 
   /** Returns how many rows from the bottom the ambulance has cleared. */
