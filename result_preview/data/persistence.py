@@ -57,7 +57,6 @@ def load_stats():
     global _cache
     try:
         remote = _fetch_remote()
-        print(f"[persistence] Loaded state from JSONBin: {remote}")
         _cache = remote
     except Exception as exc:
         print(f"[persistence] WARNING: could not fetch from JSONBin: {exc}")
@@ -74,11 +73,13 @@ def load_user_state(username: str, default_teams: set) -> dict:
             "hypothetical":   {},
             "selected_teams": set(default_teams),
             "compare_teams":  set(),
+            "grid" : {}
         }
     return {
         "hypothetical":   {int(k): tuple(v) for k, v in raw.get("hypothetical", {}).items()},
         "selected_teams": set(raw.get("selected_teams", list(default_teams))),
         "compare_teams":  set(raw.get("compare_teams", [])),
+        "grid" : raw.get("grid", {})
     }
 
 
@@ -90,5 +91,6 @@ def save_user_state(username: str, state: dict) -> None:
         "hypothetical":   {str(k): list(v) for k, v in state["hypothetical"].items()},
         "selected_teams": sorted(state["selected_teams"]),
         "compare_teams":  sorted(state["compare_teams"]),
+        "grid" : state["grid"],
     }
-    _push_remote(_cache)
+    # _push_remote(_cache)

@@ -1,0 +1,425 @@
+
+<style>
+  :root {
+    --road-w: 160px;
+    --shoulder-w: 80px;
+    --row-h: 72px;
+    --car-w: 48px;
+    --car-h: 58px;
+    --amb-w: 44px;
+    --amb-h: 60px;
+  }
+  .scene {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0 16px;
+    max-width: 390px;
+    margin: 0 auto;
+    user-select: none;
+  }
+  .road-container {
+    position: relative;
+    width: calc(var(--road-w) + var(--shoulder-w) * 2);
+    background: transparent;
+  }
+  .road-bg {
+    position: absolute;
+    left: var(--shoulder-w);
+    top: 0; bottom: 0;
+    width: var(--road-w);
+    background: #4a4a4a;
+  }
+  .lane-marker {
+    position: absolute;
+    left: calc(var(--shoulder-w) + var(--road-w) / 2 - 2px);
+    top: 0; bottom: 0;
+    width: 4px;
+    background: repeating-linear-gradient(to bottom, #e8c84a 0, #e8c84a 18px, transparent 18px, transparent 34px);
+  }
+  .shoulder-left {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: var(--shoulder-w);
+    background: #8ac08a;
+  }
+  .shoulder-right {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: var(--shoulder-w);
+    background: #8ac08a;
+  }
+  .road-edge-left {
+    position: absolute;
+    left: var(--shoulder-w);
+    top: 0; bottom: 0;
+    width: 3px;
+    background: #e0e0e0;
+  }
+  .road-edge-right {
+    position: absolute;
+    right: var(--shoulder-w);
+    top: 0; bottom: 0;
+    width: 3px;
+    background: #e0e0e0;
+  }
+  .row {
+    position: relative;
+    height: var(--row-h);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .car {
+    position: absolute;
+    width: var(--car-w);
+    height: var(--car-h);
+    border-radius: 6px 6px 4px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.45s cubic-bezier(0.4,0,0.2,1);
+    z-index: 10;
+  }
+  .car-left  { background: #378ADD; }
+  .car-right { background: #D85A30; }
+  .car-window {
+    width: 34px; height: 14px;
+    background: rgba(255,255,255,0.35);
+    border-radius: 3px;
+    margin-bottom: 4px;
+  }
+  .car-body-strip {
+    width: 34px; height: 4px;
+    background: rgba(0,0,0,0.12);
+    border-radius: 2px;
+  }
+  .ambulance-row {
+    position: relative;
+    height: 76px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ambulance {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--amb-w);
+    height: var(--amb-h);
+    background: #e8e8e8;
+    border-radius: 6px 6px 4px 4px;
+    border: 2px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: top 0.5s ease;
+  }
+  .amb-cross {
+    width: 20px; height: 20px;
+    position: relative;
+    margin-bottom: 3px;
+  }
+  .amb-cross::before, .amb-cross::after {
+    content: '';
+    position: absolute;
+    background: #cc2222;
+    border-radius: 1px;
+  }
+  .amb-cross::before { width: 6px; height: 20px; left: 7px; top: 0; }
+  .amb-cross::after  { width: 20px; height: 6px; left: 0; top: 7px; }
+  .amb-siren {
+    width: 28px; height: 8px;
+    background: #1a6fc4;
+    border-radius: 3px;
+    margin-top: 2px;
+  }
+  .amb-siren.on { background: #e84040; }
+  .lion-box {
+    width: calc(var(--road-w) + var(--shoulder-w) * 2);
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    position: relative;
+    z-index: 5;
+  }
+  .progress-bar-wrap {
+    width: calc(var(--road-w) + var(--shoulder-w) * 2);
+    height: 6px;
+    background: var(--color-border-tertiary);
+    border-radius: 3px;
+    margin: 8px 0 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: #1D9E75;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn {
+    padding: 7px 14px;
+    font-size: 13px;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  .status-label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .row-num {
+    position: absolute;
+    left: 4px;
+    top: 50%; transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    z-index: 20;
+  }
+  .clear-indicator {
+    position: absolute;
+    left: 50%;
+    top: 50%; 
+    transform: translate(-50%, -50%);
+    width: 30px; height: 50px;
+    border-left: 2.5px dashed rgba(255,255,255,0.3);
+    border-right: 2.5px dashed rgba(255,255,255,0.3);
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .clear-indicator.open {
+    border-left-color: rgba(30,200,120,0.7);
+    border-right-color: rgba(30,200,120,0.7);
+  }
+  .passed-overlay {
+    position: absolute;
+    left: var(--shoulder-w); right: var(--shoulder-w);
+    top: 0; bottom: 0;
+    background: rgba(30,160,100,0.15);
+    z-index: 3;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .win-banner {
+    display: none;
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 500;
+    color: #1D9E75;
+    z-index: 99;
+    pointer-events: none;
+    background: rgba(255,255,255,0.0);
+  }
+</style>
+
+<div class="scene">
+  <div class="status-label" id="statusLabel">Demo – Schritt 1 von 5</div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="road-container" id="roadContainer">
+    <div class="lion-box" id="lionBox">🦁</div>
+    <div class="shoulder-left"></div>
+    <div class="shoulder-right"></div>
+    <div class="road-bg"></div>
+    <div class="road-edge-left"></div>
+    <div class="road-edge-right"></div>
+    <div class="lane-marker"></div>
+    <div id="rowsContainer"></div>
+    <div class="ambulance-row" id="ambRow">
+      <div class="ambulance" id="ambCar">
+        <div class="amb-siren" id="ambSiren"></div>
+        <div class="amb-cross"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="prevBtn" onclick="prevStep()">← Zurück</button>
+    <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Weiter →</button>
+    <button class="btn" onclick="resetDemo()">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+const ROAD_W = 160, SHOULDER_W = 80, ROW_H = 72, CAR_W = 48, CAR_H = 58;
+const TOTAL_W = ROAD_W + SHOULDER_W * 2;
+
+// Position mapping: 0=left of left, 1=on left lane, 2=on right lane, 3=right of right lane
+// Center of TOTAL_W = 160, road center = 160 (SHOULDER_W + ROAD_W/2)
+// lane centers: left lane center = SHOULDER_W + ROAD_W/4, right lane center = SHOULDER_W + 3*ROAD_W/4
+const POS_CENTER = [
+  SHOULDER_W / 2,                              // 0: left shoulder center
+  SHOULDER_W + ROAD_W / 4,                     // 1: left lane center
+  SHOULDER_W + (3 * ROAD_W) / 4,              // 2: right lane center
+  SHOULDER_W + ROAD_W + SHOULDER_W / 2,        // 3: right shoulder center
+];
+
+// Demo scenario: [leftPos, rightPos] for each row (7 rows)
+const demoScenarios = [
+  // step 0: initial state, all blocking
+  [[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[1,2]],
+  // step 1: row 7 clears
+  [[1,2],[1,2],[1,2],[1,2],[1,2],[1,2],[0,3]],
+  // step 2: rows 6+7 clear
+  [[1,2],[1,2],[1,2],[1,2],[1,2],[0,3],[0,3]],
+  // step 3: rows 4-7 clear
+  [[1,2],[1,2],[1,2],[0,3],[0,3],[0,3],[0,3]],
+  // step 4: all clear!
+  [[0,3],[0,3],[0,3],[0,3],[0,3],[0,3],[0,3]],
+];
+
+const stepLabels = [
+  "Alle Autos blockieren die Fahrbahn",
+  "Reihe 7 macht Platz – Rettungsgasse beginnt",
+  "Reihe 6 reagiert ebenfalls",
+  "Mehr als die Hälfte frei",
+  "Rettungsgasse komplett – der Löwe wartet! 🦁",
+];
+
+let currentStep = 0;
+let sirenInterval;
+
+function getCarLeft(pos) {
+  return POS_CENTER[pos] - CAR_W / 2;
+}
+
+function isRowClear(leftPos, rightPos) {
+  return leftPos === 0 && rightPos === 3;
+}
+
+function buildRows(rows) {
+  const container = document.getElementById('rowsContainer');
+  container.innerHTML = '';
+  rows.forEach((row, i) => {
+    const [lp, rp] = row;
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.id = `row-${i}`;
+
+    const clear = isRowClear(lp, rp);
+
+    // passed overlay (green tint when clear)
+    const overlay = document.createElement('div');
+    overlay.className = 'passed-overlay';
+    overlay.style.opacity = clear ? '1' : '0';
+    div.appendChild(overlay);
+
+    // center corridor indicator
+    const ind = document.createElement('div');
+    ind.className = 'clear-indicator' + (clear ? ' open' : '');
+    div.appendChild(ind);
+
+    // row number
+    const rn = document.createElement('div');
+    rn.className = 'row-num';
+    rn.textContent = (rows.length - i);
+    div.appendChild(rn);
+
+    // left car
+    const lc = document.createElement('div');
+    lc.className = 'car car-left';
+    lc.id = `car-L-${i}`;
+    lc.style.left = getCarLeft(lp) + 'px';
+    lc.innerHTML = '<div class="car-window"></div><div class="car-body-strip"></div>';
+    div.appendChild(lc);
+
+    // right car
+    const rc = document.createElement('div');
+    rc.className = 'car car-right';
+    rc.id = `car-R-${i}`;
+    rc.style.left = getCarLeft(rp) + 'px';
+    rc.innerHTML = '<div class="car-window"></div><div class="car-body-strip"></div>';
+    div.appendChild(rc);
+
+    container.appendChild(div);
+  });
+}
+
+function updateRows(rows) {
+  rows.forEach((row, i) => {
+    const [lp, rp] = row;
+    const clear = isRowClear(lp, rp);
+
+    const lc = document.getElementById(`car-L-${i}`);
+    const rc = document.getElementById(`car-R-${i}`);
+    if (lc) lc.style.left = getCarLeft(lp) + 'px';
+    if (rc) rc.style.left = getCarLeft(rp) + 'px';
+
+    const rowEl = document.getElementById(`row-${i}`);
+    if (rowEl) {
+      const overlay = rowEl.querySelector('.passed-overlay');
+      const ind = rowEl.querySelector('.clear-indicator');
+      if (overlay) overlay.style.opacity = clear ? '1' : '0';
+      if (ind) ind.className = 'clear-indicator' + (clear ? ' open' : '');
+    }
+  });
+}
+
+function render(step) {
+  const rows = demoScenarios[step];
+  if (step === 0) {
+    buildRows(rows);
+  } else {
+    updateRows(rows);
+  }
+
+  // progress
+  const pct = (step / (demoScenarios.length - 1)) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('statusLabel').textContent = stepLabels[step];
+
+  // siren blink
+  clearInterval(sirenInterval);
+  const siren = document.getElementById('ambSiren');
+  let sirenOn = false;
+  sirenInterval = setInterval(() => {
+    sirenOn = !sirenOn;
+    siren.className = 'amb-siren' + (sirenOn ? ' on' : '');
+  }, 400);
+
+  // lion pulse on win
+  const lion = document.getElementById('lionBox');
+  if (step === demoScenarios.length - 1) {
+    lion.style.fontSize = '52px';
+    lion.style.transition = 'font-size 0.3s';
+  } else {
+    lion.style.fontSize = '42px';
+  }
+
+  document.getElementById('prevBtn').disabled = step === 0;
+  document.getElementById('nextBtn').textContent = step === demoScenarios.length - 1 ? '✓ Fertig' : 'Weiter →';
+  document.getElementById('nextBtn').disabled = step === demoScenarios.length - 1;
+  currentStep = step;
+}
+
+function nextStep() { if (currentStep < demoScenarios.length - 1) render(currentStep + 1); }
+function prevStep() { if (currentStep > 0) render(currentStep - 1); }
+function resetDemo() { render(0); }
+
+render(0);
+</script>
