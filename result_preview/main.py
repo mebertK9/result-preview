@@ -32,9 +32,9 @@ def load_user(username):
         return User(username)
     return None
 
-# Load persisted state on startup.
-
+# Load persisted state on startup and init grid
 load_stats()
+_grid_state: dict = {"grid": init_grid()}
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -160,11 +160,8 @@ def logout():
 def home():
     state = load_user_state(current_user.id, DEFAULT_TEAMS)
     hypothetical = state["hypothetical"]
-    grid = state["grid"]
-    if(grid == {}):
-        print(f"grid is empty")
-        grid = init_grid()
-
+    grid = _grid_state["grid"]
+    
     all_team_names = sorted({
         team for game in saison_25_26 for team in [game[0], game[1]]
     })
@@ -240,8 +237,9 @@ def home():
             + [None] * ROWS
         )[:ROWS]))
         for competitor in COMPETITORS
-}
+    }
 
+    print(f"HOME: hypos right before init template: {hypothetical}")
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
                            lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
@@ -330,15 +328,11 @@ def move():
 
     action = _get_action(team1, team, score1, score2)
 
-    state = load_user_state(current_user.id, DEFAULT_TEAMS)
-    grid = state["grid"]
-    if(grid == {}):
-        print("grid is empty")
-        grid = init_grid()
-    state["grid"] = apply_action(grid, r, lion_or_gegner, action)
+    grid = _grid_state["grid"]
+    grid = apply_action(grid, r, lion_or_gegner, action)
 
-    save_user_state(current_user.id, state)
-    return jsonify(to_rettungswagen(state["grid"]))
+    _grid_state["grid"] = grid
+    return jsonify(to_rettungswagen(grid))
 
 def _get_action(team1, team, score1, score2) -> str:
     if(score1 == None or score2 == None):
