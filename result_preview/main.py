@@ -217,12 +217,15 @@ def home():
         for i, game in enumerate(saison_25_26)
         if len(game) == 2 and game_visible(game)
     ]
-
+    
+    def is_pending_game_of_team(game, team) -> bool:
+        return team in (game[0], game[1]) and game in pending_games
+            
     # Build one game entry per grid row (None if no Löwen game in that row)
     loewen_pending = [
         {"idx": idx, "team1": game[0], "team2": game[1]}
-        for idx, game, in enumerate(pending_games)
-        if LOEWEN in (game[0], game[1])
+        for idx, game, in enumerate(saison_25_26)
+        if is_pending_game_of_team(game, LOEWEN)
     ]
     # Pad to ROWS length with None
     lion_games = loewen_pending + [None] * (ROWS - len(loewen_pending))
@@ -235,30 +238,14 @@ def home():
         competitor: list(reversed((
             [
                 {"idx": idx, "team1": game[0], "team2": game[1]}
-                for idx, game, in enumerate(pending_games)
-                if competitor in (game[0], game[1])
+                for idx, game, in enumerate(saison_25_26)
+                if is_pending_game_of_team(game, competitor)
             ]
             + [None] * ROWS
         )[:ROWS]))
         for competitor in COMPETITORS
     }
-    print("")
-    print("##########################################################################")
-    print("")
 
-    print(f"HOME: hypos right before init template: {hypothetical}")
-    print("")
-    print("##########################################################################")
-    print("")
-    print("Compare hypos, linons, competitors and all games")
-    print(f"hypos: {hypothetical}")
-    print(f"lions: {lion_games}")
-    print(f"compis: {all_competitor_games}")
-    print("")
-    print("##########################################################################")
-    print("")
-    print(f"pending: {pending_games}")
-    print(f"all games: {completed_games}")
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
                            lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
