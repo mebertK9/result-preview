@@ -145,12 +145,6 @@
     const area = document.getElementById(`${prefix}-rows`);
     area.innerHTML = '';
 
-    console.log("games:", games)
-    console.log(comptetior, "mbc-games", compGames)
-    console.log("rows:", rows)
-    console.log("hypos", hypotheticals)
-    console.log("#################")
-
     rows.forEach((cars, i) => {
       const div = document.createElement('div');
       div.className = 'rg-row';
@@ -160,12 +154,6 @@
       const ci = document.createElement('div'); ci.className = 'rg-clear-ind';      div.appendChild(ci);
       const rn = document.createElement('div'); rn.className = 'rg-row-num';
       rn.textContent = rows.length - i; div.appendChild(rn);
-
-      // [
-        // {"lane": 0, "type": "right", "gameIdx": 3},
-      //   {"lane": 3, "type": "right", "gameIdx": 7}
-      // ]
-      // TODO rg-car-left und rg-cat-right nach rg-car-lion und rg-car-opponent umbennen - type entsprechend
 
       // Each car in this row gets its own element, keyed by its index within the row
       cars.filter((c) => c.type).forEach((car, j) => {
@@ -185,7 +173,6 @@
           team = comptetior;
         }
          const hypothetical = hypotheticals && hypotheticals[game?.idx];
-         console.log("selected game:", game)
         if (game && onAction) {
           el.classList.add('has-game');
           el.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction, team));
