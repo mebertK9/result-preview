@@ -1,4 +1,3 @@
-import logging
 import os
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for, jsonify
