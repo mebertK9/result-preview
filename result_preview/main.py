@@ -35,7 +35,6 @@ def load_user(username):
 # Load persisted state on startup and init grid
 load_stats()
 _grid_state: dict = {"grid": init_grid()}
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 

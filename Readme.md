@@ -1,15 +1,15 @@
 # Eigentlich ne TODO-Liste, aber wen stört's?
 ## TODO
 
-+ [...] überprüfen, ob rettungsgasse und kalkulator synchron sind
++ [x] überprüfen, ob rettungsgasse und kalkulator synchron sind
     + [x] Grid wieder ins jsonbin-json
         + [x] Check (Synchron?)
     + [x] Grid ganz aus user data raus
         + [x] wahrscheinlich kein speichern des grid-status
     + [x] Eigener Grid-Cache
-    + [ ] Weitere Analyse, immer noch nicht synchron
+    + [x] Weitere Analyse, immer noch nicht synchron
 + [ ] Puffer-Reihen
-    + [ ] Das richtige Spiel zumindest anzeigen€
+    + [ ] Das richtige Spiel zumindest anzeigen
     + [ ]  Initial: Löwen-Spiele auf Seitenstreifen
     + [ ] _BAD_-Eregnis? Verdrängt neutrales Spiel vom Seitenstreifen auf 1
     + [ ] Dieses Spiel
