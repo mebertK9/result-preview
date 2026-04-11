@@ -227,6 +227,10 @@ def home():
     # Pad to ROWS length with None
     lion_games = loewen_pending + [None] * (ROWS - len(loewen_pending))
 
+# FIXME indices from hypos differ from pending_games.
+# pending games dont have indices
+# see finalize: catch games from saison
+# alternative: write/catch indices and initialisation of pending games
     all_competitor_games = {
         competitor: list(reversed((
             [
@@ -238,8 +242,23 @@ def home():
         )[:ROWS]))
         for competitor in COMPETITORS
     }
+    print("")
+    print("##########################################################################")
+    print("")
 
     print(f"HOME: hypos right before init template: {hypothetical}")
+    print("")
+    print("##########################################################################")
+    print("")
+    print("Compare hypos, linons, competitors and all games")
+    print(f"hypos: {hypothetical}")
+    print(f"lions: {lion_games}")
+    print(f"compis: {all_competitor_games}")
+    print("")
+    print("##########################################################################")
+    print("")
+    print(f"pending: {pending_games}")
+    print(f"all games: {completed_games}")
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
                            lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
