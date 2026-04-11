@@ -15,7 +15,7 @@ saison_25_26 = [
     ("Veolia Towers Hamburg", "Skyliners Frankfurt", 97, 75),
     ("VET-CONCEPT Gladiators Trier", "MHP RIESEN Ludwigsburg", 92, 76),
     ("BMA365 Bamberg Baskets", "Science City Jena", 81, 75),
-    ("SYNTAINICS MBC", "Veolia Towers Hamburg"),
+    ("SYNTAINICS MBC", "Veolia Towers Hamburg",99,94),
     ("ratiopharm Ulm", "BMA365 Bamberg Baskets"),
     ("MHP RIESEN Ludwigsburg", "Alba Berlin"),
     ("Science City Jena", "Fitness First Würzburg Baskets"),
