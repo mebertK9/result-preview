@@ -1,4 +1,4 @@
-import os
+import logging
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import (
@@ -35,6 +35,7 @@ def load_user(username):
 # Load persisted state on startup and init grid
 load_stats()
 _grid_state: dict = {"grid": init_grid()}
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -239,7 +240,7 @@ def home():
         for competitor in COMPETITORS
     }
 
-    print(f"HOME: hypos right before init template: {hypothetical}")
+    logging.info(f"HOME: hypos right before init template: {hypothetical}")
     return render_template('index.html',
                            grid=to_rettungswagen(grid),
                            lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
