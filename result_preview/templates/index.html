@@ -405,51 +405,50 @@
 
 
 <script>
-  const grid      = {{ grid | tojson }};
-  const lionGames = {{ lion_games | tojson }};
-  const all_competitor_games = {{ all_competitor_games | tojson }};
-  const hypothetical = {{ hypothetical | tojson }};
-  
-//   COMPETITORS = ["SYNTAINICS MBC"]
-  const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
-  
-  //   competitorNames.forEach(team => {
-//   const divId = `game-${team.replace(/\s+/g, '-')}`;
-//   document.getElementById(divId)  // div muss im HTML existieren
-//   renderRettungsgasse(divId, grid, {
-  test_team = "SYNTAINICS MBC"
+    const grid = {{ grid | tojson }};
+    const lionGames = {{ lion_games | tojson }};
+    const all_competitor_games = {{ all_competitor_games | tojson }};
+    const hypothetical = {{ hypothetical | tojson }};
 
-  renderRettungsgasse("game-loewen", grid, {
-    games: lionGames,
-    competitor_games: all_competitor_games[test_team],
-    competitor: test_team,
-    hypotheticals: hypothetical,
-    onAction: async function(game, rowIndex, score1, score2, team) {
-      if (score1 !== null && score2 !== null) {
-        await fetch(`/set_score/${game.idx}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `score1=${score1}&score2=${score2}`
-        });
-      }
-      const res = await fetch("/move", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ row: rowIndex, game: game,  team: team, score1: score1, score2: score2})
-      });
-      const newRows = await res.json();
-      const handler = arguments.callee;
-      renderRettungsgasse("game-loewen", newRows, {
+    //   COMPETITORS = ["SYNTAINICS MBC"]
+    const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
+
+    //   competitorNames.forEach(team => {
+    //   const divId = `game-${team.replace(/\s+/g, '-')}`;
+    //   document.getElementById(divId)  // div muss im HTML existieren
+    //   renderRettungsgasse(divId, grid, {
+    test_team = "SYNTAINICS MBC"
+
+    renderRettungsgasse("game-loewen", grid, {
         games: lionGames,
-        hypotheticals: hypothetical,
         competitor_games: all_competitor_games[test_team],
         competitor: test_team,
-        onAction: handler
-      });
-    }
-  });
+        hypotheticals: hypothetical,
+        onAction: async function (game, rowIndex, score1, score2, team) {
+            if (score1 !== null && score2 !== null) {
+                await fetch(`/set_score/${game.idx}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: `score1=${score1}&score2=${score2}`
+                });
+            }
+            const res = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ row: rowIndex, game: game, team: team, score1: score1, score2: score2 })
+            });
+            const newRows = await res.json();
+            const handler = arguments.callee;
+            renderRettungsgasse("game-loewen", newRows, {
+                games: lionGames,
+                hypotheticals: hypothetical,
+                competitor_games: all_competitor_games[test_team],
+                competitor: test_team,
+                onAction: handler
+            });
+        }
+    });
 </script>
-</body>
-</html>
+
 </body>
 </html>
