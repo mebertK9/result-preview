@@ -174,7 +174,6 @@
         }
          const hypothetical = hypotheticals && hypotheticals[game?.idx];
         if (game && onAction) {
-          console.log("build rows: found game for popup:", game, " with index", car.idx)
           el.classList.add('has-game');
           el.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction, team));
         }
@@ -308,6 +307,8 @@
   window.renderRettungsgasse = function (containerId, rows, options) {
     options = options || {};
     injectStyles();
+
+    console.log(rows)
 
     const container = document.getElementById(containerId);
     if (!container) { console.error('renderRettungsgasse: container not found:', containerId); return; }

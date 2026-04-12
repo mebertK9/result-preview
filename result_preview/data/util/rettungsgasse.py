@@ -18,15 +18,18 @@ def print_table(grid):
     print()
 
 
-def place_in_mandatory_target(grid, token) -> bool:
+def place_in_mandatory_target(grid, moving_car) -> bool:
     """
     platziert in den ersten freien Zielreihen unterhalb der mandatory rows
     (hier: Reihe 6, dann 7)
     """
     for r in range(MANDATORY_ROWS, ROWS):
-        if grid[r][0] == {}:
-            token["lane"] = 0
-            grid[r][0] = token
+        if grid[r][1] == {}:
+            waiting_car = grid[r][3]
+            waiting_car["lane"] = 1
+            grid[r][1] = waiting_car
+            moving_car["lane"] = 3
+            grid[r][3] = moving_car
             return True
     return False
 
@@ -49,10 +52,10 @@ def init_grid(loewen_games: list[dict], all_comp_games: list[dict | None]) -> li
         }
     for r in range(MANDATORY_ROWS, ROWS):
         loewen_index= loewen_games[r]["idx"]
-        grid[r][2] = {
+        grid[r][3] = {
             "idx": loewen_index,
             "type": "right",
-            "lane": 2
+            "lane": 3
         }
 
     print("init grid:")
@@ -139,12 +142,12 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
                 if place_in_mandatory_target(grid, to_move): 
                     grid[r][2] = {}
     else:
-        if is_loewe(grid[r][2]):
-            to_move = grid[r][2]
+        if is_loewe(grid[r][1]):
+            to_move = grid[r][1]
             if s == "S":
-                to_move["lane"] = 3
-                grid[r][3] = to_move
-                grid[r][2] = {}
+                to_move["lane"] = 0
+                grid[r][0] = to_move
+                grid[r][1] = {}
             elif(s == "N"):
                 if place_in_mandatory_target(grid, to_move): 
                     grid[r][2] = {}

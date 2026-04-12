@@ -8,13 +8,13 @@
         + [x] wahrscheinlich kein speichern des grid-status
     + [x] Eigener Grid-Cache
     + [x] Weitere Analyse, immer noch nicht synchron
-+ [...] Puffer-Reihen
-    + [...] Das richtige Spiel zumindest anzeigen
-    + [ ]  Initial: Löwen-Spiele auf Seitenstreifen
-    + [ ] _BAD_-Eregnis? Verdrängt neutrales Spiel vom Seitenstreifen auf 1
-    + [ ] Dieses Spiel
-        + [ ] Gewonnen? _fremnder_ = linker Seitensterifen
-        + [ ] Verloren? normale _BAD_-Logik
++ [x] Puffer-Reihen
+    + [x] Das richtige Spiel zumindest anzeigen
+    + [x]  Initial: Löwen-Spiele auf Seitenstreifen
+    + [x] _BAD_-Eregnis? Verdrängt neutrales Spiel vom Seitenstreifen auf 1
+    + [x] Dieses Spiel
+        + [x] Gewonnen? _fremnder_ = linker Seitensterifen
+        + [x] Verloren? normale _BAD_-Logik
 + [ ] Mehrretungsgassigkeit    
     + [ ] Aktuelle Rettungsgasse aus Schleife
     + [ ] **Achung:** Auch das _div_ in Schleife!

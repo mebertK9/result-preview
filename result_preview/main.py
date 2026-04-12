@@ -362,13 +362,13 @@ def _get_action(team1, team, score1, score2) -> str:
     
     return action
 
-# @app.route("/reset", methods=["POST"])
-# @login_required
-# def reset():
-#     state = load_user_state(current_user.id, DEFAULT_TEAMS)
-#     state["grid"] = init_grid()
-#     save_user_state(current_user.id, state)
-#     return jsonify(to_rettungsgasse(state["grid"]))
+@app.route("/reset", methods=["POST"])
+@login_required
+def reset():
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
+    state["grid"] = init_grid()
+    save_user_state(current_user.id, state)
+    return jsonify(to_rettungsgasse(state["grid"]))
 
 
 if __name__ == "__main__":
