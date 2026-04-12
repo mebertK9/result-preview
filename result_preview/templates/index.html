@@ -214,6 +214,11 @@
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
     
     <div id="game-loewen"></div>
+    <button id="btn-auto-play" onclick="autoPlay()" style="margin: 8px 0; padding: 10px 18px; font-size: 1rem; 
+                   background: #1D9E75; color: white; border: none; 
+                   border-radius: 8px; cursor: pointer;">
+        🚑 Rette den Löwen
+    </button>
 
     <details>
         <summary>Auswahl Teams</summary>
@@ -410,20 +415,12 @@
     const all_competitor_games = {{ all_competitor_games | tojson }};
     const hypothetical = {{ hypothetical | tojson }};
 
-    //   COMPETITORS = ["SYNTAINICS MBC"]
     const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
+    const test_team = "SYNTAINICS MBC";
 
-    //   competitorNames.forEach(team => {
-    //   const divId = `game-${team.replace(/\s+/g, '-')}`;
-    //   renderRettungsgasse(divId, grid, {
-    const test_team = "SYNTAINICS MBC"
-
-    renderRettungsgasse("game-loewen", grid, {
-        games: lionGames,
-        competitor_games: all_competitor_games[test_team],
-        competitor: test_team,
-        hypotheticals: hypothetical,
-        onAction: async function (game, rowIndex, score1, score2, team) {
+    // Extracted so autoPlay() can reference it
+    function makeOnAction(currentHandler) {
+        return async function onAction(game, rowIndex, score1, score2, team) {
             if (score1 !== null && score2 !== null) {
                 await fetch(`/set_score/${game.idx}`, {
                     method: "POST",
@@ -434,19 +431,84 @@
             const res = await fetch("/move", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ row: rowIndex, game: game, team: team, score1: score1, score2: score2 })
+                body: JSON.stringify({ row: rowIndex, game, team, score1, score2 })
             });
             const newRows = await res.json();
-            const handler = arguments.callee;
             renderRettungsgasse("game-loewen", newRows, {
                 games: lionGames,
-                hypotheticals: hypothetical,
                 competitor_games: all_competitor_games[test_team],
                 competitor: test_team,
-                onAction: handler
+                hypotheticals: hypothetical,
+                onAction: makeOnAction()
             });
-        }
+        };
+    }
+
+    renderRettungsgasse("game-loewen", grid, {
+        games: lionGames,
+        competitor_games: all_competitor_games[test_team],
+        competitor: test_team,
+        hypotheticals: hypothetical,
+        onAction: makeOnAction()
     });
+
+    async function autoPlay() {
+        const btn = document.getElementById('btn-auto-play');
+        btn.disabled = true;
+
+        // Collect moves from both lion and competitor games
+        const moves = [];
+        const seen = new Set();
+
+        function collectMoves(gamesList, team) {
+            for (let i = gamesList.length - 1; i >= 0; i--) {
+                const game = gamesList[i];
+                if (!game) continue;
+                const hypo = hypothetical[game.idx];
+                if (!hypo) continue;
+                const key = `${game.idx}-${team}`;
+                if (seen.has(key)) continue;
+                seen.add(key);
+                moves.push({
+                    rowIndex: gamesList.length - 1 - i,  // 0 = bottom (closest to ambulance)
+                    game,
+                    team,
+                    score1: hypo[0],
+                    score2: hypo[1]
+                });
+            }
+        }
+
+        collectMoves(lionGames, "BB Löwen Braunschweig");
+        collectMoves(all_competitor_games[test_team], test_team);
+        moves.sort((a, b) => a.rowIndex - b.rowIndex);  // bottom rows first
+
+        let currentRows = grid;
+        for (const move of moves) {
+            const res = await fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    row: move.rowIndex,
+                    game: move.game,
+                    team: move.team,
+                    score1: move.score1,
+                    score2: move.score2
+                })
+            });
+            currentRows = await res.json();
+            renderRettungsgasse("game-loewen", currentRows, {
+                games: lionGames,
+                competitor_games: all_competitor_games[test_team],
+                competitor: test_team,
+                hypotheticals: hypothetical,
+                onAction: makeOnAction()
+            });
+            await new Promise(r => setTimeout(r, 700));  // wait for ambulance animation
+        }
+
+        btn.disabled = false;
+    }
 </script>
 
 </body>
