@@ -8,8 +8,8 @@
         + [x] wahrscheinlich kein speichern des grid-status
     + [x] Eigener Grid-Cache
     + [x] Weitere Analyse, immer noch nicht synchron
-+ [ ] Puffer-Reihen
-    + [ ] Das richtige Spiel zumindest anzeigen
++ [...] Puffer-Reihen
+    + [...] Das richtige Spiel zumindest anzeigen
     + [ ]  Initial: Löwen-Spiele auf Seitenstreifen
     + [ ] _BAD_-Eregnis? Verdrängt neutrales Spiel vom Seitenstreifen auf 1
     + [ ] Dieses Spiel

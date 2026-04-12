@@ -166,7 +166,7 @@
         var game = null;
         var team = null;
         if(car.type == "right") {
-          game = games && games[i];
+          game = games && games.find(g => g.idx == car.idx);
           team = "BB Löwen Braunschweig";
         } else if( car.type == "left") {
           game = compGames && compGames[i];
@@ -174,6 +174,7 @@
         }
          const hypothetical = hypotheticals && hypotheticals[game?.idx];
         if (game && onAction) {
+          console.log("build rows: found game for popup:", game, " with index", car.idx)
           el.classList.add('has-game');
           el.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction, team));
         }
