@@ -415,7 +415,6 @@
 
     //   competitorNames.forEach(team => {
     //   const divId = `game-${team.replace(/\s+/g, '-')}`;
-    //   document.getElementById(divId)  // div muss im HTML existieren
     //   renderRettungsgasse(divId, grid, {
     const test_team = "SYNTAINICS MBC"
 
@@ -438,20 +437,6 @@
                 body: JSON.stringify({ row: rowIndex, game: game, team: team, score1: score1, score2: score2 })
             });
             const newRows = await res.json();
-            // console.log("new rows with target row",newRows)
-            // const movingCar = newRows.find(c => c.targetRow)
-            // if(movingCar){  
-            //     const currentGamesIndex = game.idx
-            //     const newIndex = movingCar.targetRow
-            //     console.log("game to move:", game)
-            //     console.log("game at current index", lionGames[currentGamesIndex])
-            //     lionGames[currentGamesIndex] = null
-            //     lionGames[movingCar.targetRow] = game
-            //     console.log("after move:")
-            //     console.log("game at old index:", lionGames[currentGamesIndex])
-            //     console.log("game at new index", newIndex, ":", lionGames[newIndex])
-            // }
-            // console.log("lion game, maybe with moved one", lionGames)
             const handler = arguments.callee;
             renderRettungsgasse("game-loewen", newRows, {
                 games: lionGames,

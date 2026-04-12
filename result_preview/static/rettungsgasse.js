@@ -169,7 +169,7 @@
           game = games && games.find(g => g.idx == car.idx);
           team = "BB Löwen Braunschweig";
         } else if( car.type == "left") {
-          game = compGames && compGames[i];
+          game = compGames && compGames.find(g => g.idx == car.idx);
           team = comptetior;
         }
          const hypothetical = hypotheticals && hypotheticals[game?.idx];

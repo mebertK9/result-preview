@@ -231,14 +231,14 @@ def home():
     lion_games = loewen_pending + [None] * (ROWS - len(loewen_pending))
 
     all_competitor_games = {
-        competitor: list(reversed((
+        competitor: (
             [
                 {"idx": idx, "team1": game[0], "team2": game[1]}
                 for idx, game, in enumerate(saison_25_26)
                 if is_pending_game_of_team(game, competitor)
             ]
             + [None] * MANDATORY_ROWS
-        )[:MANDATORY_ROWS]))
+        )[:MANDATORY_ROWS]
         for competitor in COMPETITORS
     }
 
@@ -247,16 +247,11 @@ def home():
     if grid == {}:
         grid = init_grid(loewen_pending, current_competitor_games)
         _grid_state["grid"] = grid
-    # else:
-        # update_grid(grid, loewen_pending, all_competitor_games)
-
-    # FIXME reverse cars/grid
-    # cars = to_rettungsgasse(grid)
-    cars = list(reversed(grid))
+   
     return render_template('index.html',
-                           grid=cars,
+                           grid=list(reversed(grid)),
                            lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
-                           all_competitor_games = all_competitor_games,
+                           all_competitor_games = {team_name: list(reversed(comp_game)) for team_name, comp_game in all_competitor_games.items()},
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
