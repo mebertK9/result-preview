@@ -167,7 +167,7 @@ def generate_user_data():
         else:
             username_found = True
 
-    return indexed_user_name,password,pw_hash
+    return username,password,pw_hash
  
 @app.route('/logout')
 @login_required
