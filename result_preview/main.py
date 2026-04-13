@@ -8,11 +8,11 @@ from flask_login import (
 from werkzeug.security import check_password_hash
  
 from models.team import Team
+from data.util.rettungsgasse import Rettungsgasse
 from models.team_stats import TeamStats
 from data.games import saison_25_26, LOEWEN, COMPETITORS
 from data.users import USERS, ADMIN_USER
 from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
-from data.util.rettungsgasse import init_grid, apply_action, ROWS, MANDATORY_ROWS
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
@@ -34,7 +34,7 @@ def load_user(username):
 
 # Load persisted state on startup and init grid
 load_stats()
-_grid_state: dict = {"grid": {}}
+_grid_state: dict[str, Rettungsgasse] = {"grid": {}}
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -160,8 +160,7 @@ def logout():
 def home():
     state = load_user_state(current_user.id, DEFAULT_TEAMS)
     hypothetical = state["hypothetical"]
-    grid = _grid_state["grid"]
-
+    
     all_team_names = sorted({
         team for game in saison_25_26 for team in [game[0], game[1]]
     })
@@ -227,9 +226,9 @@ def home():
         for idx, game, in enumerate(saison_25_26)
         if is_pending_game_of_team(game, LOEWEN)
     ]
-    # Pad to ROWS length with None
-    lion_games = loewen_pending + [None] * (ROWS - len(loewen_pending))
 
+    # FIXME
+    MANDATORY_ROWS = 5
     all_competitor_games = {
         competitor: (
             [
@@ -242,15 +241,21 @@ def home():
         for competitor in COMPETITORS
     }
 
+    # FIXME
     comp_team = COMPETITORS[0]
     current_competitor_games = all_competitor_games[comp_team]
-    if grid == {}:
-        grid = init_grid(loewen_pending, current_competitor_games)
-        _grid_state["grid"] = grid
+
+    mbc_rettungsgasse = Rettungsgasse(7, 5)
+
+    if not comp_team in _grid_state or _grid_state[comp_team] == {}:
+        _grid_state[comp_team] = mbc_rettungsgasse
+        mbc_rettungsgasse.init_grid(loewen_pending, current_competitor_games)
+
+    grid = mbc_rettungsgasse.grid
    
     return render_template('index.html',
                            grid=list(reversed(grid)),
-                           lion_games=list(reversed(lion_games)),  # reverse to match grid orientation
+                           lion_games=list(reversed(loewen_pending)),  # reverse to match grid orientation
                            all_competitor_games = {team_name: list(reversed(comp_game)) for team_name, comp_game in all_competitor_games.items()},
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
@@ -336,10 +341,10 @@ def move():
 
     action = _get_action(team1, team, score1, score2)
 
-    grid = _grid_state["grid"]
-    grid = apply_action(grid, row_to_transform, lion_or_gegner, action)
+    # FIXME
+    rettungsgasse = _grid_state[COMPETITORS[0]]
+    grid = rettungsgasse.apply_action(row_to_transform, lion_or_gegner, action)
 
-    _grid_state["grid"] = grid
     return jsonify(list(reversed(grid)))
 
 def _get_action(team1, team, score1, score2) -> str:
@@ -365,7 +370,8 @@ def _get_action(team1, team, score1, score2) -> str:
 @app.route("/reset", methods=["POST"])
 @login_required
 def reset():
-    _grid_state["grid"] = {} 
+    # FIXME
+    _grid_state[COMPETITORS[0]] = {} 
     return "", 204
 
 if __name__ == "__main__":

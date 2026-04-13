@@ -15,10 +15,10 @@
     + [x] Dieses Spiel
         + [x] Gewonnen? _fremnder_ = linker Seitensterifen
         + [x] Verloren? normale _BAD_-Logik
-+ [ ] Mehrretungsgassigkeit    
++ [...] Mehrretungsgassigkeit    
     + [ ] Aktuelle Rettungsgasse aus Schleife
     + [ ] **Achung:** Auch das _div_ in Schleife!
-    + [ ] _MANDATORY_ und _ROW_ konfigurierbar machen
+    + [...] _MANDATORY_ und _ROW_ konfigurierbar machen
         + [ ] _ROW:_ Zu spielende Spiele (Löwen = Pending, wird schon errechnet)
         + [ ] _MANDATORY:_ Siegdifferenz
 + [?] Auswertung der Gasse: Geschafft/nicht geschafft (Löwe erreicht?)
