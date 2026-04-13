@@ -15,15 +15,19 @@
     + [x] Dieses Spiel
         + [x] Gewonnen? _fremnder_ = linker Seitensterifen
         + [x] Verloren? normale _BAD_-Logik
-+ [ ] Mehrretungsgassigkeit    
++ [...] Mehrretungsgassigkeit    
     + [ ] Aktuelle Rettungsgasse aus Schleife
     + [ ] **Achung:** Auch das _div_ in Schleife!
-    + [ ] _MANDATORY_ und _ROW_ konfigurierbar machen
-        + [ ] _ROW:_ Zu spielende Spiele (Löwen = Pending, wird schon errechnet)
-        + [ ] _MANDATORY:_ Siegdifferenz
+    + [x] Mögliche Gegner werden errechnet
+    + [y] _MANDATORY_ und _ROW_ konfigurierbar machen
+        + [x] _ROW:_ Zu spielende Spiele (Löwen = Pending, wird schon errechnet)
+        + [x] _MANDATORY:_ Siegdifferenz
 + [?] Auswertung der Gasse: Geschafft/nicht geschafft (Löwe erreicht?)
 + [?] Meta-Auswertung der Rettungsgassen: Reichen die Gassen für den Klassenerhalt?
-+ [ ] Spiele rückgängig machen
++ [x] Spiele rückgängig machen
+    + [x] Auf Knopfdruck
+        + [x] alles reset
+        + [x] alles automatisch abspielen
     + [ ] neue Züge?
     + [ ] immer von vore rendern
         + [ ] dabei dann nicht das Eintrag-Ereignis (/move), sondern beim rendern IMMER das kalkulator-Ergebnis
