@@ -14,7 +14,7 @@ class Rettungsgasse:
     """
 
     def __init__(self, rows: int, mandatory_rows: int) -> None:
-        if mandatory_rows >= rows:
+        if mandatory_rows > rows:
             raise ValueError("mandatory_rows must be less than rows")
         self.rows = rows
         self.mandatory_rows = mandatory_rows
@@ -43,9 +43,6 @@ class Rettungsgasse:
             lion_index = lion_games[r]["idx"]
             self.grid[r][3] = {"idx": lion_index, "type": "right", "lane": 3}
 
-        print("init grid:")
-        self.print_table()
-
         return self.grid
 
     def update_grid(
@@ -72,9 +69,6 @@ class Rettungsgasse:
         for r in range(self.mandatory_rows, self.rows):
             lion_index = lion_games[r].idx
             self.grid[r][2] = {"idx": lion_index, "type": "right", "lane": 2}
-
-        print("updated grid:")
-        self.print_table()
 
         return self.grid
 

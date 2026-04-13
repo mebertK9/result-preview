@@ -1,5 +1,4 @@
 LOEWEN = "BB Löwen Braunschweig"
-COMPETITORS = ["SYNTAINICS MBC"]
 
 saison_25_26 = [
     ("Bayern München", "MHP RIESEN Ludwigsburg"),

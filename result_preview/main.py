@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash
 from models.team import Team
 from data.util.rettungsgasse import Rettungsgasse
 from models.team_stats import TeamStats
-from data.games import saison_25_26, LOEWEN, COMPETITORS
+from data.games import saison_25_26, LOEWEN
 from data.users import USERS, ADMIN_USER
 from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
 
@@ -227,29 +227,53 @@ def home():
         if is_pending_game_of_team(game, LOEWEN)
     ]
 
-    # FIXME
-    MANDATORY_ROWS = 5
+    def wins_of_team(team) -> int:
+        full_wins = next(stats.wins for name, stats in full_standings if str(name) == team)
+        hypo_win_count = hypo_wins[team] if team in hypo_wins else 0
+        return full_wins - hypo_win_count       
+        
+    # Calculate once before the loop, since LOEWEN doesn't change
+    loewen_wins = wins_of_team(LOEWEN)
+
+    def games_for_competitor(competitor: str) -> list:
+        mandatory_rows = wins_of_team(competitor) - loewen_wins
+        
+        pending_games = [
+            {"idx": idx, "team1": game[0], "team2": game[1]}
+            for idx, game in enumerate(saison_25_26)
+            if is_pending_game_of_team(game, competitor)
+        ]
+        
+        # Pad with None if not enough games, or trim if too many
+        padded = (pending_games + [None] * mandatory_rows)[:mandatory_rows]
+        return padded
+
+
+    loewen_games_left = len(loewen_pending)
+
+    def all_relevant_competitors() -> list[str]:
+        return [
+            team for team in all_team_names
+            if team != LOEWEN
+            and wins_of_team(team) - loewen_wins <= loewen_games_left
+        ]
+    left_competitors =  all_relevant_competitors()
     all_competitor_games = {
-        competitor: (
-            [
-                {"idx": idx, "team1": game[0], "team2": game[1]}
-                for idx, game, in enumerate(saison_25_26)
-                if is_pending_game_of_team(game, competitor)
-            ]
-            + [None] * MANDATORY_ROWS
-        )[:MANDATORY_ROWS]
-        for competitor in COMPETITORS
-    }
+        competitor: games_for_competitor(competitor)
+        for competitor in left_competitors
+    }   
 
     # FIXME
-    comp_team = COMPETITORS[0]
+    comp_team = left_competitors[0]
     current_competitor_games = all_competitor_games[comp_team]
 
-    mbc_rettungsgasse = Rettungsgasse(7, 5)
-
+    mbc_rettungsgasse: Rettungsgasse
     if not comp_team in _grid_state or _grid_state[comp_team] == {}:
+        mbc_rettungsgasse = Rettungsgasse(loewen_games_left, wins_of_team(comp_team) - loewen_wins)
         _grid_state[comp_team] = mbc_rettungsgasse
         mbc_rettungsgasse.init_grid(loewen_pending, current_competitor_games)
+    else:
+        mbc_rettungsgasse = _grid_state[comp_team]
 
     grid = mbc_rettungsgasse.grid
    
@@ -325,7 +349,8 @@ def finalize_game(idx):
 def move():
     row_to_transform = request.json["row"]
     game = request.json["game"]
-    team = request.json["team"]
+    team = request.json["affected_team"]
+    competitor = request.json["competitor"]
     score1 = request.json["score1"]
     score2 = request.json["score2"]
 
@@ -341,8 +366,7 @@ def move():
 
     action = _get_action(team1, team, score1, score2)
 
-    # FIXME
-    rettungsgasse = _grid_state[COMPETITORS[0]]
+    rettungsgasse = _grid_state[competitor]
     grid = rettungsgasse.apply_action(row_to_transform, lion_or_gegner, action)
 
     return jsonify(list(reversed(grid)))
@@ -364,14 +388,14 @@ def _get_action(team1, team, score1, score2) -> str:
         else:
             action = "S"
 
-    
     return action
 
 @app.route("/reset", methods=["POST"])
 @login_required
 def reset():
-    # FIXME
-    _grid_state[COMPETITORS[0]] = {} 
+    data = request.get_json()
+    team_name = data["team_name"]
+    _grid_state[team_name] = {}
     return "", 204
 
 if __name__ == "__main__":
