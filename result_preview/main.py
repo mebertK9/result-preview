@@ -153,19 +153,16 @@ def generate_user_data():
     if(username != "passwort"):
         return username,password,pw_hash
 
-    stats = load_stats()
-
     index = 1
-    indexed_user_name = f"{username}{index}"
-    username_found = False
-    while(not username_found):
-        print(index)
-        print(indexed_user_name)
-        if stats and indexed_user_name in stats:
+    username = f"{username}{index}"
+    indexed_user = False
+    while(not indexed_user):
+        data = load_user_state(indexed_user, DEFAULT_TEAMS)
+        if not data or not username in data:
             index = index + 1
-            indexed_user_name = f"{username}{index}"
+            username = f"{username}{index}"
         else:
-            username_found = True
+            indexed_user = True
 
     return username,password,pw_hash
  
