@@ -138,33 +138,14 @@ def login_page():
         return redirect(url_for('home'))
     error = None
     if request.method == 'POST':
-        username, password, pw_hash = generate_user_data()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        pw_hash = USERS.get(username)
         if pw_hash and check_password_hash(pw_hash, password):
-            login_user(User(username), remember=True)   
+            login_user(User(username), remember=True)
             return redirect(url_for('home'))
         error = "Benutzername oder Passwort falsch."
     return render_template('login.html', error=error)
-
-def generate_user_data():
-    username = request.form.get('username', '').strip()
-    password = request.form.get('password', '')
-    pw_hash = USERS.get(username)
-
-    if(username != "passwort"):
-        return username,password,pw_hash
-
-    index = 1
-    username = f"{username}{index}"
-    indexed_user = False
-    while(not indexed_user):
-        data = load_user_state(indexed_user, DEFAULT_TEAMS)
-        if not data or not username in data:
-            index = index + 1
-            username = f"{username}{index}"
-        else:
-            indexed_user = True
-
-    return username,password,pw_hash
  
 @app.route('/logout')
 @login_required
