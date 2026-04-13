@@ -365,8 +365,11 @@ def _get_action(team1, team, score1, score2) -> str:
 @app.route("/reset", methods=["POST"])
 @login_required
 def reset():
-    _grid_state["grid"] = {} 
-    return "", 204
+    state = load_user_state(current_user.id, DEFAULT_TEAMS)
+    state["grid"] = init_grid()
+    save_user_state(current_user.id, state)
+    return jsonify(to_rettungsgasse(state["grid"]))
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)

@@ -152,4 +152,7 @@ def apply_action(grid: list[list[str]], r: int, kind: str, s: str) -> list[list[
                 if place_in_mandatory_target(grid, to_move): 
                     grid[r][2] = {}
 
+    print("After movement")
+    print_table(grid)
+
     return grid

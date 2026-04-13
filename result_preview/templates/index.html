@@ -214,18 +214,11 @@
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
     
     <div id="game-loewen"></div>
-    <div style="display:flex; gap:8px; margin: 8px 0;">
-        <button id="btn-auto-play" onclick="autoPlay()" style="padding: 10px 18px; font-size: 1rem;
-                       background: #1D9E75; color: white; border: none;
-                       border-radius: 8px; cursor: pointer;">
-            🚑 Rette den Löwen
-        </button>
-        <button onclick="resetGrid()" style="padding: 10px 18px; font-size: 1rem;
-                       background: #888; color: white; border: none;
-                       border-radius: 8px; cursor: pointer;">
-            🔄 Zurücksetzen
-        </button>
-    </div>
+    <button id="btn-auto-play" onclick="autoPlay()" style="margin: 8px 0; padding: 10px 18px; font-size: 1rem; 
+                   background: #1D9E75; color: white; border: none; 
+                   border-radius: 8px; cursor: pointer;">
+        🚑 Rette den Löwen
+    </button>
 
     <details>
         <summary>Auswahl Teams</summary>
@@ -516,10 +509,6 @@
 
         btn.disabled = false;
     }
-    async function resetGrid() {
-            await fetch("/reset", { method: "POST" });
-            window.location.reload();
-        }
 </script>
 
 </body>
