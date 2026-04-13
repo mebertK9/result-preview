@@ -72,14 +72,12 @@ def load_user_state(username: str, default_teams: set) -> dict:
         return {
             "hypothetical":   {},
             "selected_teams": set(default_teams),
-            "compare_teams":  set(),
-            "grid" : {}
+            "compare_teams":  set()
         }
     return {
         "hypothetical":   {int(k): tuple(v) for k, v in raw.get("hypothetical", {}).items()},
         "selected_teams": set(raw.get("selected_teams", list(default_teams))),
-        "compare_teams":  set(raw.get("compare_teams", [])),
-        "grid" : raw.get("grid", {})
+        "compare_teams":  set(raw.get("compare_teams", []))
     }
 
 
@@ -90,7 +88,6 @@ def save_user_state(username: str, state: dict) -> None:
     _cache[username] = {
         "hypothetical":   {str(k): list(v) for k, v in state["hypothetical"].items()},
         "selected_teams": sorted(state["selected_teams"]),
-        "compare_teams":  sorted(state["compare_teams"]),
-        "grid" : state["grid"],
+        "compare_teams":  sorted(state["compare_teams"])
     }
     _push_remote(_cache)
