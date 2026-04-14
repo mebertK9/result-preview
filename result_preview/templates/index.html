@@ -200,6 +200,52 @@
         }
 
         /* ---- Mobile adjustments ---- */
+        /* ---- Rettungsgasse: one block per competitor team ---- */
+        .gasse-wrap {
+            border-top: 2px solid #e0e0e0;
+            padding-top: 10px;
+            margin-bottom: 8px;
+        }
+
+        .gasse-wrap:first-of-type {
+            border-top: none;
+        }
+
+        .gasse-header {
+            max-width: 390px;
+            margin: 0 auto 2px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            color: #555;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .gasse-controls {
+            display: flex;
+            gap: 8px;
+            margin: 6px auto 0;
+            max-width: 390px;
+            justify-content: space-between;
+        }
+
+        .gasse-controls button {
+            padding: 8px 14px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-rescue {
+            background: #1D9E75;
+        }
+
+        .btn-reset {
+            background: #888;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 8px;
@@ -238,6 +284,11 @@
             .dv-check {
                 width: 20px;
                 height: 20px;
+            }
+
+            .gasse-controls button {
+                padding: 7px 10px;
+                font-size: 0.82rem;
             }
         }
     </style>
@@ -278,25 +329,23 @@
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
 
-    <!-- Outer wrapper: never touched by renderRettungsgasse -->
-    <div class="gasse-wrap" id="gasse-wrap-loewen">
-        <!-- Buttons live here, outside the render container -->
-        <!-- max-width + margin:auto mirrors .rg-scene so edges align -->
-        <div style="display:flex; gap:8px; margin: 8px auto; max-width:390px; justify-content:space-between;">
-            <button id="btn-auto-play" onclick="autoPlay(test_team)" style="padding: 10px 18px; font-size: 1rem;
-                           background: #1D9E75; color: white; border: none;
-                           border-radius: 8px; cursor: pointer;">
+    {% for team_name in all_competitor_games.keys() %}
+    {% set gasse_id = "gasse-" ~ loop.index0 %}
+    <!-- Outer wrapper for {{ team_name }} — never touched by renderRettungsgasse -->
+    <div class="gasse-wrap" id="wrap-{{ gasse_id }}">
+        <div class="gasse-header">vs. {{ sn(team_name) }}</div>
+        <div class="gasse-controls">
+            <button class="btn-rescue" id="btn-rescue-{{ gasse_id }}" onclick="autoPlay('{{ team_name }}')">
                 🚑 Rette den Löwen
             </button>
-            <button onclick="resetGrid(test_team)" style="padding: 10px 18px; font-size: 1rem;
-                           background: #888; color: white; border: none;
-                           border-radius: 8px; cursor: pointer;">
+            <button class="btn-reset" onclick="resetGrid('{{ team_name }}')">
                 🔄 Zurücksetzen
             </button>
         </div>
         <!-- renderRettungsgasse only ever touches this div -->
-        <div id="game-loewen"></div>
+        <div id="{{ gasse_id }}"></div>
     </div>
+    {% endfor %}
 
     <details>
         <summary>Auswahl Teams</summary>
@@ -484,16 +533,24 @@
 
 
     <script>
-        const grid = {{ grid | tojson }};
+        // all_grids: dict keyed by competitor name → initial grid rows for that lane.
+        // Requires main.py to pass all_grids=rettungsgasse_manager.get_all_grids() to the template.
+        const all_grids = {{ all_grids | tojson }};
         const lionGames = {{ lion_games | tojson }};
         const all_competitor_games = {{ all_competitor_games | tojson }};
         const hypothetical = {{ hypothetical | tojson }};
 
+        // Ordered list of competitors — matches the Jinja loop.index0 used for container IDs
         const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
-        const test_team = competitorNames[0];
 
-        // Extracted so autoPlay() can reference it
-        function makeOnAction(currentHandler) {
+        // Derive the render-container ID for a given competitor (mirrors Jinja: "gasse-" ~ loop.index0)
+        function containerIdFor(competitor) {
+            return 'gasse-' + competitorNames.indexOf(competitor);
+        }
+
+        // Returns an onAction callback bound to a specific competitor and its container
+        function makeOnAction(competitor) {
+            const containerId = containerIdFor(competitor);
             return async function onAction(game, rowIndex, score1, score2, team) {
                 if (score1 !== null && score2 !== null) {
                     await fetch(`/set_score/${game.idx}`, {
@@ -505,29 +562,34 @@
                 const res = await fetch("/move", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ row: rowIndex, game, affected_team: team, competitor: test_team, score1, score2 })
+                    body: JSON.stringify({ row: rowIndex, game, affected_team: team, competitor, score1, score2 })
                 });
                 const newRows = await res.json();
-                renderRettungsgasse("game-loewen", newRows, {
+                renderRettungsgasse(containerId, newRows, {
                     games: lionGames,
-                    competitor_games: all_competitor_games[test_team],
-                    competitor: test_team,
+                    competitor_games: all_competitor_games[competitor],
+                    competitor,
                     hypotheticals: hypothetical,
-                    onAction: makeOnAction()
+                    onAction: makeOnAction(competitor)
                 });
             };
         }
 
-        renderRettungsgasse("game-loewen", grid, {
-            games: lionGames,
-            competitor_games: all_competitor_games[test_team],
-            competitor: test_team,
-            hypotheticals: hypothetical,
-            onAction: makeOnAction()
+        // Initial render for every competitor lane
+        competitorNames.forEach(function (competitor) {
+            const containerId = containerIdFor(competitor);
+            renderRettungsgasse(containerId, all_grids[competitor], {
+                games: lionGames,
+                competitor_games: all_competitor_games[competitor],
+                competitor,
+                hypotheticals: hypothetical,
+                onAction: makeOnAction(competitor)
+            });
         });
 
         async function autoPlay(competitor) {
-            const btn = document.getElementById('btn-auto-play');
+            const containerId = containerIdFor(competitor);
+            const btn = document.getElementById('btn-rescue-' + containerId);
             btn.disabled = true;
 
             // Collect moves from both lion and competitor games
@@ -558,7 +620,7 @@
             collectMoves(all_competitor_games[competitor], competitor);
             moves.sort((a, b) => a.rowIndex - b.rowIndex);  // bottom rows first
 
-            let currentRows = grid;
+            let currentRows = all_grids[competitor];
             for (const move of moves) {
                 const res = await fetch("/move", {
                     method: "POST",
@@ -573,18 +635,19 @@
                     })
                 });
                 currentRows = await res.json();
-                renderRettungsgasse("game-loewen", currentRows, {
+                renderRettungsgasse(containerId, currentRows, {
                     games: lionGames,
                     competitor_games: all_competitor_games[competitor],
                     competitor,
                     hypotheticals: hypothetical,
-                    onAction: makeOnAction()
+                    onAction: makeOnAction(competitor)
                 });
                 await new Promise(r => setTimeout(r, 700));  // wait for ambulance animation
             }
 
             btn.disabled = false;
         }
+
         async function resetGrid(teamName) {
             await fetch("/reset", {
                 method: "POST",
