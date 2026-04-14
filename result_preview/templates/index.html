@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bitte Rettungsgasse freimachen</title>
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             font-family: Arial, sans-serif;
@@ -21,11 +24,13 @@
             border-bottom: 2px solid #ccc;
             padding-bottom: 4px;
         }
+
         .logo {
-          display: block;
-          margin: 0 auto;
-          max-width: 350px;
+            display: block;
+            margin: 0 auto;
+            max-width: 350px;
         }
+
         /* ---- Team selection ---- */
         .team-grid {
             display: flex;
@@ -73,10 +78,12 @@
             /* No min-width: let tables shrink naturally on mobile */
         }
 
-        th, td {
+        th,
+        td {
             padding: 8px 10px;
             border: 1px solid #ddd;
-            white-space: nowrap; /* default: keep numbers/buttons on one line */
+            white-space: nowrap;
+            /* default: keep numbers/buttons on one line */
         }
 
         /* Team name cells may wrap to avoid horizontal scroll */
@@ -91,16 +98,40 @@
             font-size: 0.85rem;
         }
 
-        td { font-size: 0.9rem; }
+        td {
+            font-size: 0.9rem;
+        }
 
         /* ---- Colors ---- */
-        .hypo-row     { background: #fffbe6; }
-        .hypo-team    { background: #e8e8e8; }
-        .hypo-badge   { color: #666; font-size: 0.82em; font-weight: normal; }
-        .compare-row  { background: #ddeeff; }
-        .compare-game { background: #ddeeff; }
-        .hypo-compare { background: #cce8cc; }
-        .bold { font-weight: bold; }
+        .hypo-row {
+            background: #fffbe6;
+        }
+
+        .hypo-team {
+            background: #e8e8e8;
+        }
+
+        .hypo-badge {
+            color: #666;
+            font-size: 0.82em;
+            font-weight: normal;
+        }
+
+        .compare-row {
+            background: #ddeeff;
+        }
+
+        .compare-game {
+            background: #ddeeff;
+        }
+
+        .hypo-compare {
+            background: #cce8cc;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
 
         /* ---- DV checkbox in table ---- */
         .dv-check {
@@ -163,39 +194,73 @@
             cursor: pointer;
             transition: color 0.15s;
         }
-        .btn-finalize:hover { color: #c60; }
+
+        .btn-finalize:hover {
+            color: #c60;
+        }
 
         /* ---- Mobile adjustments ---- */
         @media (max-width: 600px) {
-            body { padding: 8px; font-size: 14px; }
-            h2 { font-size: 1rem; }
-            th { font-size: 0.72rem; padding: 5px 4px; }
-            td { font-size: 0.82rem; padding: 5px 4px; }
-            .team-grid label { font-size: 0.85rem; padding: 5px 8px; }
-            .score-form input[type=number] { width: 44px; font-size: 0.9rem; }
-            .btn-set { padding: 5px 8px; font-size: 0.9rem; }
-            .dv-check { width: 20px; height: 20px; }
+            body {
+                padding: 8px;
+                font-size: 14px;
+            }
+
+            h2 {
+                font-size: 1rem;
+            }
+
+            th {
+                font-size: 0.72rem;
+                padding: 5px 4px;
+            }
+
+            td {
+                font-size: 0.82rem;
+                padding: 5px 4px;
+            }
+
+            .team-grid label {
+                font-size: 0.85rem;
+                padding: 5px 8px;
+            }
+
+            .score-form input[type=number] {
+                width: 44px;
+                font-size: 0.9rem;
+            }
+
+            .btn-set {
+                padding: 5px 8px;
+                font-size: 0.9rem;
+            }
+
+            .dv-check {
+                width: 20px;
+                height: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div style="text-align:right; font-size:0.82rem; color:#888; margin-bottom:6px;">
-    {{ current_user.id }}
-    &nbsp;·&nbsp;
-    <a href="/logout" style="color:#888;">Abmelden</a>
-</div>
+    <div style="text-align:right; font-size:0.82rem; color:#888; margin-bottom:6px;">
+        {{ current_user.id }}
+        &nbsp;·&nbsp;
+        <a href="/logout" style="color:#888;">Abmelden</a>
+    </div>
 
-{# ============================================================
-   SHORT NAME MAPPING
-   Add entries here for any team whose name is long.
-   Format:  "Full team name as stored in DB": "Short"
-   The short name is shown in all tables; the full name is used
-   in the team-filter grid (where there is more space).
-   ============================================================ #}
-{% set name_map = {
+    {# ============================================================
+    SHORT NAME MAPPING
+    Add entries here for any team whose name is long.
+    Format: "Full team name as stored in DB": "Short"
+    The short name is shown in all tables; the full name is used
+    in the team-filter grid (where there is more space).
+    ============================================================ #}
+    {% set name_map = {
     "Veolia Towers Hamburg": "Towers",
-    "BB Löwen Braunschweig":     "Löwen",
+    "BB Löwen Braunschweig": "Löwen",
     "MHP RIESEN Ludwigsburg": "Riesen",
     "VET-CONCEPT Gladiators Trier": "Trier",
     "BMA365 Bamberg Baskets": "Bamberg",
@@ -206,27 +271,32 @@
     "EWE Baskets Oldenburg": "EWE",
     "SC RASTA Vechta": "RASTA",
     "MLP Academics Heidelberg": "MLP"
-} %}
+    } %}
 
-{# Helper macro: returns short name if mapping exists, otherwise full name #}
-{% macro sn(full_name) %}{{ name_map.get(full_name, full_name) }}{% endmacro %}
+    {# Helper macro: returns short name if mapping exists, otherwise full name #}
+    {% macro sn(full_name) %}{{ name_map.get(full_name, full_name) }}{% endmacro %}
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
-    
-    <div id="game-loewen">
-    <div style="display:flex; gap:8px; margin: 8px 0;">
-        <button id="btn-auto-play" onclick="autoPlay()" style="padding: 10px 18px; font-size: 1rem;
-                       background: #1D9E75; color: white; border: none;
-                       border-radius: 8px; cursor: pointer;">
-            🚑 Rette den Löwen
-        </button>
-        <button onclick="resetGrid(test_team)" style="padding: 10px 18px; font-size: 1rem;
-                       background: #888; color: white; border: none;
-                       border-radius: 8px; cursor: pointer;">
-            🔄 Zurücksetzen
-        </button>
-    </div>Test-Text
-</div>
+
+    <!-- Outer wrapper: never touched by renderRettungsgasse -->
+    <div class="gasse-wrap" id="gasse-wrap-loewen">
+        <!-- Buttons live here, outside the render container -->
+        <!-- max-width + margin:auto mirrors .rg-scene so edges align -->
+        <div style="display:flex; gap:8px; margin: 8px auto; max-width:390px; justify-content:space-between;">
+            <button id="btn-auto-play" onclick="autoPlay(test_team)" style="padding: 10px 18px; font-size: 1rem;
+                           background: #1D9E75; color: white; border: none;
+                           border-radius: 8px; cursor: pointer;">
+                🚑 Rette den Löwen
+            </button>
+            <button onclick="resetGrid(test_team)" style="padding: 10px 18px; font-size: 1rem;
+                           background: #888; color: white; border: none;
+                           border-radius: 8px; cursor: pointer;">
+                🔄 Zurücksetzen
+            </button>
+        </div>
+        <!-- renderRettungsgasse only ever touches this div -->
+        <div id="game-loewen"></div>
+    </div>
 
     <details>
         <summary>Auswahl Teams</summary>
@@ -236,88 +306,85 @@
             <input type="hidden" name="compare" value="{{t}}">
             {% endfor %}
             <div class="team-grid">
-            {% for name in all_team_names %}
-            <label>
-                <input type="checkbox" name="teams" value="{{name}}"
-                       {% if name in selected_teams %}checked{% endif %}
-                       onchange="this.form.submit()">
-                {{name}}
-            </label>
-            {% endfor %}
+                {% for name in all_team_names %}
+                <label>
+                    <input type="checkbox" name="teams" value="{{name}}" {% if name in selected_teams %}checked{% endif
+                        %} onchange="this.form.submit()">
+                    {{name}}
+                </label>
+                {% endfor %}
             </div>
         </form>
     </details>
-    
+
     <details>
         <summary>Kalkulator</summary>
-    <h2>Ausstehende Spiele</h2>
-    <div class="table-wrap">
-    <table>
-        <tr>
-            <th>Team 1</th>
-            <th>Team 2</th>
-            <th>Was wäre wenn?</th>
-        </tr>
-        {% for idx, game, is_compare in visible_pending %}
-        {% set has_hypo = idx in hypothetical %}
-        {% set first_won = has_hypo and hypothetical[idx][0] > hypothetical[idx][1] %}
-        {% set second_won = has_hypo and hypothetical[idx][1] > hypothetical[idx][0] %}
-        <tr class="{% if is_compare and has_hypo %}hypo-compare{% elif is_compare %}compare-game{% elif has_hypo %}hypo-row{% endif %}">
-            <td class="team-name {%if first_won %}bold{% endif %}">{{ sn(game[0]) }}</td>
-            <td class="team-name {%if second_won %}bold{% endif %}">{{ sn(game[1]) }}</td>
-            <td>
-                <form class="score-form" method="POST" action="/set_score/{{idx}}">
-                    <input type="number" name="score1" inputmode="numeric"
-                           value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}"
-                           placeholder="–">
-                    <span class="score-sep">:</span>
-                    <input type="number" name="score2" inputmode="numeric"
-                           value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}"
-                           placeholder="–">
-                    <button type="submit" class="btn-set">✓</button>
-                </form>
-                {% if has_hypo %}
-                <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
-                {% if is_admin %}
-                <a href="/finalize/{{idx}}" class="btn-finalize"
-                   title="Spiel festschreiben (nicht revidierbar)"
-                   onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
-                {% endif %}
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    </div>
+        <h2>Ausstehende Spiele</h2>
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>Team 1</th>
+                    <th>Team 2</th>
+                    <th>Was wäre wenn?</th>
+                </tr>
+                {% for idx, game, is_compare in visible_pending %}
+                {% set has_hypo = idx in hypothetical %}
+                {% set first_won = has_hypo and hypothetical[idx][0] > hypothetical[idx][1] %}
+                {% set second_won = has_hypo and hypothetical[idx][1] > hypothetical[idx][0] %}
+                <tr
+                    class="{% if is_compare and has_hypo %}hypo-compare{% elif is_compare %}compare-game{% elif has_hypo %}hypo-row{% endif %}">
+                    <td class="team-name {%if first_won %}bold{% endif %}">{{ sn(game[0]) }}</td>
+                    <td class="team-name {%if second_won %}bold{% endif %}">{{ sn(game[1]) }}</td>
+                    <td>
+                        <form class="score-form" method="POST" action="/set_score/{{idx}}">
+                            <input type="number" name="score1" inputmode="numeric"
+                                value="{% if has_hypo %}{{hypothetical[idx][0]}}{% endif %}" placeholder="–">
+                            <span class="score-sep">:</span>
+                            <input type="number" name="score2" inputmode="numeric"
+                                value="{% if has_hypo %}{{hypothetical[idx][1]}}{% endif %}" placeholder="–">
+                            <button type="submit" class="btn-set">✓</button>
+                        </form>
+                        {% if has_hypo %}
+                        <a href="/clear_score/{{idx}}" class="btn-clear">✕</a>
+                        {% if is_admin %}
+                        <a href="/finalize/{{idx}}" class="btn-finalize" title="Spiel festschreiben (nicht revidierbar)"
+                            onclick="return confirm('Ergebnis {{hypothetical[idx][0]}}:{{hypothetical[idx][1]}} für dieses Spiel dauerhaft festschreiben?')">🔒</a>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
     </details>
 
     {% if direct_standings %}
     <h2>Direkter Vergleich</h2>
     <div class="table-wrap">
-    <table>
-        <tr>
-            <th>#</th>
-            <th>Team</th>
-            <th>Sp</th>
-            <th>S</th>
-            <th>Pkt</th>
-            <th>K+</th>
-            <th>K−</th>
-            <th>Diff</th>
-        </tr>
-        {% for name, stats in direct_standings %}
-        <tr>
-            <td>{{loop.index}}</td>
-            <td class="team-name">{{ sn(name) }}</td>
-            <td>{{stats.games}}</td>
-            <td>{{stats.wins}}</td>
-            <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
-            <td>{{stats.points}}</td>
-            <td>{{stats.against}}</td>
-            <td>{{stats.point_diff()}}</td>
-        </tr>
-        {% endfor %}
-    </table>
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>Sp</th>
+                <th>S</th>
+                <th>Pkt</th>
+                <th>K+</th>
+                <th>K−</th>
+                <th>Diff</th>
+            </tr>
+            {% for name, stats in direct_standings %}
+            <tr>
+                <td>{{loop.index}}</td>
+                <td class="team-name">{{ sn(name) }}</td>
+                <td>{{stats.games}}</td>
+                <td>{{stats.wins}}</td>
+                <td>{{stats.plus_points()}}:{{stats.minus_points()}}</td>
+                <td>{{stats.points}}</td>
+                <td>{{stats.against}}</td>
+                <td>{{stats.point_diff()}}</td>
+            </tr>
+            {% endfor %}
+        </table>
     </div>
     {% endif %}
 
@@ -348,9 +415,8 @@
                     <tr class="{% if in_compare %}compare-row{% elif hcount %}hypo-team{% endif %}">
                         <td>{{loop.index}}</td>
                         <td style="text-align:center">
-                            <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}"
-                            {% if in_compare %}checked{% endif %}
-                            onchange="this.form.submit()">
+                            <input class="dv-check" type="checkbox" name="compare" value="{{name.name}}" {% if
+                                in_compare %}checked{% endif %} onchange="this.form.submit()">
                         </td>
                         <td class="team-name {% if in_selected %}bold{% endif %}">
                             {{ sn(name.name) }}
@@ -368,167 +434,168 @@
             </div>
         </form>
     </details>
-        
-        
-    <details>
-      <summary>Alle Ergebnisse</summary>
 
-      <div class="table-wrap">
-      <table>
-          <tr>
-              <th>Team 1</th>
-              <th>Team 2</th>
-              <th>Ergebnis</th>
-          </tr>
-          {% for game, is_compare in visible_completed %}
-          <tr {% if is_compare %}class="compare-game"{% endif %}>
-              <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
-              <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
-              <td>{{game[2]}} : {{game[3]}}</td>
-          </tr>
-          {% endfor %}
-      </table>
-      </div>
+
+    <details>
+        <summary>Alle Ergebnisse</summary>
+
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>Team 1</th>
+                    <th>Team 2</th>
+                    <th>Ergebnis</th>
+                </tr>
+                {% for game, is_compare in visible_completed %}
+                <tr {% if is_compare %}class="compare-game" {% endif %}>
+                    <td class="team-name {% if game[0] in selected_teams %}bold{% endif %}">{{ sn(game[0]) }}</td>
+                    <td class="team-name {% if game[1] in selected_teams %}bold{% endif %}">{{ sn(game[1]) }}</td>
+                    <td>{{game[2]}} : {{game[3]}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
 
     </details>
 
-<script>
-    (function () {
-        var savedY = sessionStorage.getItem('scrollY');
-        if (savedY !== null) {
-            window.scrollTo(0, parseInt(savedY, 10));
-            sessionStorage.removeItem('scrollY');
-        }
-        function saveScroll() {
-            sessionStorage.setItem('scrollY', window.scrollY);
-        }
-        document.querySelectorAll('.score-form').forEach(function (form) {
-            form.addEventListener('submit', saveScroll);
-        });
-        document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
-            link.addEventListener('click', saveScroll);
-        });
-        document.querySelectorAll('.dv-check').forEach(function (cb) {
-            cb.addEventListener('change', saveScroll);
-        });
-    })();
-</script>
+    <script>
+        (function () {
+            var savedY = sessionStorage.getItem('scrollY');
+            if (savedY !== null) {
+                window.scrollTo(0, parseInt(savedY, 10));
+                sessionStorage.removeItem('scrollY');
+            }
+            function saveScroll() {
+                sessionStorage.setItem('scrollY', window.scrollY);
+            }
+            document.querySelectorAll('.score-form').forEach(function (form) {
+                form.addEventListener('submit', saveScroll);
+            });
+            document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
+                link.addEventListener('click', saveScroll);
+            });
+            document.querySelectorAll('.dv-check').forEach(function (cb) {
+                cb.addEventListener('change', saveScroll);
+            });
+        })();
+    </script>
 
-<script src="/static/rettungsgasse.js"></script>
+    <script src="/static/rettungsgasse.js"></script>
 
 
-<script>
-    const grid = {{ grid | tojson }};
-    const lionGames = {{ lion_games | tojson }};
-    const all_competitor_games = {{ all_competitor_games | tojson }};
-    const hypothetical = {{ hypothetical | tojson }};
+    <script>
+        const grid = {{ grid | tojson }};
+        const lionGames = {{ lion_games | tojson }};
+        const all_competitor_games = {{ all_competitor_games | tojson }};
+        const hypothetical = {{ hypothetical | tojson }};
 
-    const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
-    const test_team = competitorNames[0];
+        const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
+        const test_team = competitorNames[0];
 
-    // Extracted so autoPlay() can reference it
-    function makeOnAction(currentHandler) {
-        return async function onAction(game, rowIndex, score1, score2, team) {
-            if (score1 !== null && score2 !== null) {
-                await fetch(`/set_score/${game.idx}`, {
+        // Extracted so autoPlay() can reference it
+        function makeOnAction(currentHandler) {
+            return async function onAction(game, rowIndex, score1, score2, team) {
+                if (score1 !== null && score2 !== null) {
+                    await fetch(`/set_score/${game.idx}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: `score1=${score1}&score2=${score2}`
+                    });
+                }
+                const res = await fetch("/move", {
                     method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: `score1=${score1}&score2=${score2}`
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ row: rowIndex, game, affected_team: team, competitor: test_team, score1, score2 })
                 });
-            }
-            const res = await fetch("/move", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ row: rowIndex, game, affected_team: team, competitor: test_team, score1, score2 })
-            });
-            const newRows = await res.json();
-            renderRettungsgasse("game-loewen", newRows, {
-                games: lionGames,
-                competitor_games: all_competitor_games[test_team],
-                competitor: test_team,
-                hypotheticals: hypothetical,
-                onAction: makeOnAction()
-            });
-        };
-    }
-
-    renderRettungsgasse("game-loewen", grid, {
-        games: lionGames,
-        competitor_games: all_competitor_games[test_team],
-        competitor: test_team,
-        hypotheticals: hypothetical,
-        onAction: makeOnAction()
-    });
-
-    async function autoPlay() {
-        const btn = document.getElementById('btn-auto-play');
-        btn.disabled = true;
-
-        // Collect moves from both lion and competitor games
-        const moves = [];
-        const seen = new Set();
-
-        function collectMoves(gamesList, team) {
-            for (let i = gamesList.length - 1; i >= 0; i--) {
-                const game = gamesList[i];
-                if (!game) continue;
-                const hypo = hypothetical[game.idx];
-                if (!hypo) continue;
-                const key = `${game.idx}-${team}`;
-                if (seen.has(key)) continue;
-                seen.add(key);
-                moves.push({
-                    rowIndex: gamesList.length - 1 - i,  // 0 = bottom (closest to ambulance)
-                    game,
-                    team,
+                const newRows = await res.json();
+                renderRettungsgasse("game-loewen", newRows, {
+                    games: lionGames,
+                    competitor_games: all_competitor_games[test_team],
                     competitor: test_team,
-                    score1: hypo[0],
-                    score2: hypo[1]
+                    hypotheticals: hypothetical,
+                    onAction: makeOnAction()
                 });
-            }
+            };
         }
 
-        collectMoves(lionGames, "BB Löwen Braunschweig");
-        collectMoves(all_competitor_games[test_team], test_team);
-        moves.sort((a, b) => a.rowIndex - b.rowIndex);  // bottom rows first
+        renderRettungsgasse("game-loewen", grid, {
+            games: lionGames,
+            competitor_games: all_competitor_games[test_team],
+            competitor: test_team,
+            hypotheticals: hypothetical,
+            onAction: makeOnAction()
+        });
 
-        let currentRows = grid;
-        for (const move of moves) {
-            const res = await fetch("/move", {
+        async function autoPlay(competitor) {
+            const btn = document.getElementById('btn-auto-play');
+            btn.disabled = true;
+
+            // Collect moves from both lion and competitor games
+            const moves = [];
+            const seen = new Set();
+
+            function collectMoves(gamesList, team) {
+                for (let i = gamesList.length - 1; i >= 0; i--) {
+                    const game = gamesList[i];
+                    if (!game) continue;
+                    const hypo = hypothetical[game.idx];
+                    if (!hypo) continue;
+                    const key = `${game.idx}-${team}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    moves.push({
+                        rowIndex: gamesList.length - 1 - i,  // 0 = bottom (closest to ambulance)
+                        game,
+                        team,
+                        competitor,
+                        score1: hypo[0],
+                        score2: hypo[1]
+                    });
+                }
+            }
+
+            collectMoves(lionGames, "BB Löwen Braunschweig");
+            collectMoves(all_competitor_games[competitor], competitor);
+            moves.sort((a, b) => a.rowIndex - b.rowIndex);  // bottom rows first
+
+            let currentRows = grid;
+            for (const move of moves) {
+                const res = await fetch("/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        row: move.rowIndex,
+                        game: move.game,
+                        affected_team: move.team,
+                        competitor: move.competitor,
+                        score1: move.score1,
+                        score2: move.score2
+                    })
+                });
+                currentRows = await res.json();
+                renderRettungsgasse("game-loewen", currentRows, {
+                    games: lionGames,
+                    competitor_games: all_competitor_games[competitor],
+                    competitor,
+                    hypotheticals: hypothetical,
+                    onAction: makeOnAction()
+                });
+                await new Promise(r => setTimeout(r, 700));  // wait for ambulance animation
+            }
+
+            btn.disabled = false;
+        }
+        async function resetGrid(teamName) {
+            await fetch("/reset", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    row: move.rowIndex,
-                    game: move.game,
-                    affected_team: move.team,
-                    competitor: move.competitor,
-                    score1: move.score1,
-                    score2: move.score2
-                })
+                body: JSON.stringify({ team_name: teamName })
             });
-            currentRows = await res.json();
-            renderRettungsgasse("game-loewen", currentRows, {
-                games: lionGames,
-                competitor_games: all_competitor_games[test_team],
-                competitor: test_team,
-                hypotheticals: hypothetical,
-                onAction: makeOnAction()
-            });
-            await new Promise(r => setTimeout(r, 700));  // wait for ambulance animation
+            window.location.reload();
         }
 
-        btn.disabled = false;
-    }
-    async function resetGrid(teamName) {
-        await fetch("/reset", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ team_name: teamName })
-        });
-        window.location.reload();
-    }
-
-</script>
+    </script>
 
 </body>
+
 </html>
