@@ -54,7 +54,7 @@ saison_25_26 = [
     ("MHP RIESEN Ludwigsburg", "Bayern München"),
     ("ratiopharm Ulm", "Alba Berlin"),
     ("Veolia Towers Hamburg", "Fitness First Würzburg Baskets"),
-    ("Science City Jena", "MLP Academics Heidelberg",
+    ("Science City Jena", "MLP Academics Heidelberg"),
     ("SYNTAINICS MBC", "BMA365 Bamberg Baskets"),
     ("SC RASTA Vechta", "Rostock Seawolves"),
     ("Telekom Baskets Bonn", "VET-CONCEPT Gladiators Trier"),
