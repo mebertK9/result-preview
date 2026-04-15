@@ -237,17 +237,20 @@ def home():
 
     def games_for_competitor(competitor: str) -> list:
         mandatory_rows = wins_of_team(competitor) - loewen_wins
-        
+
         pending_games = [
             {"idx": idx, "team1": game[0], "team2": game[1]}
             for idx, game in enumerate(saison_25_26)
             if is_pending_game_of_team(game, competitor)
         ]
-        
-        # Pad with None if not enough games, or trim if too many
-        padded = (pending_games + [None] * mandatory_rows)[:mandatory_rows]
-        return padded
 
+        # Mandatory slots first (padded with None if not enough games),
+        # then remaining games for buffer rows
+        mandatory_slots = pending_games[:mandatory_rows]
+        mandatory_slots += [None] * max(0, mandatory_rows - len(mandatory_slots))
+        buffer_slots = pending_games[mandatory_rows:]
+
+        return mandatory_slots + buffer_slots
 
     loewen_games_left = len(loewen_pending)
 
