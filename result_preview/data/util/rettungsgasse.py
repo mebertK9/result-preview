@@ -47,6 +47,8 @@ class Rettungsgasse:
             lion_index = lion_games[r]["idx"]
             self.grid[r][3] = {"idx": lion_index, "type": "right", "lane": 3}
 
+        print(self.grid)
+
         return self.grid
 
     def apply_action(self, r: int, kind: str, s: str) -> list[list[dict]]:
@@ -135,10 +137,11 @@ class Rettungsgasse:
                 waiting_car_left["lane"] = 1
                 self.grid[r][1] = waiting_car_left
             
-
                 waiting_car_right = self.grid[r][3]
                 waiting_car_right["lane"] = 2
                 self.grid[r][2] = waiting_car_right
+
+                self.mandatory_rows = r
 
                 return True
         return False
