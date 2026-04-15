@@ -40,6 +40,12 @@ class Rettungsgasse:
             self.grid[r][2] = {"idx": lion_index, "type": "right", "lane": 2}
 
         for r in range(self.mandatory_rows, self.rows):
+            print(f"current all comp games: {all_comp_games}; current row: {r}; r in all_comp_games? {r in all_comp_games}")
+            if(r in all_comp_games):
+                print("Writing left car at buffer row")
+                guest_index = all_comp_games[r]["idx"]
+                self.grid[r][0] = {"idx": guest_index, "type": "left", "lane": 0}
+
             lion_index = lion_games[r]["idx"]
             self.grid[r][3] = {"idx": lion_index, "type": "right", "lane": 3}
 
@@ -159,12 +165,14 @@ class Rettungsgasse:
         mandatory rows (lane 3 -> lane 1 swap).  Returns True on success.
         """
         for r in range(self.mandatory_rows, self.rows):
-            if self.grid[r][1] == {}:
-                waiting_car = self.grid[r][3]
-                waiting_car["lane"] = 1
-                self.grid[r][1] = waiting_car
+            if self.grid[r][1] == {} and self.grid[r][2]:
+                waiting_car_left = self.grid[r][0]
+                waiting_car_left["lane"] = 1
+                self.grid[r][1] = waiting_car_left
 
-                moving_car["lane"] = 3
-                self.grid[r][3] = moving_car
+                waiting_car_right = self.grid[r][3]
+                waiting_car_right["lane"] = 2
+                self.grid[r][2] = waiting_car_right
+
                 return True
         return False
