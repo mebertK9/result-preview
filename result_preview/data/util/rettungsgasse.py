@@ -47,8 +47,6 @@ class Rettungsgasse:
             lion_index = lion_games[r]["idx"]
             self.grid[r][3] = {"idx": lion_index, "type": "right", "lane": 3}
 
-        print(self.grid)
-
         return self.grid
 
     def apply_action(self, r: int, kind: str, s: str) -> list[list[dict]]:

@@ -63,6 +63,7 @@
       .rg-car-left{background:#378ADD;}.rg-car-right{background:#D85A30;}
       .rg-car.has-game{cursor:pointer;outline:2.5px solid rgba(255,255,255,0.6);outline-offset:2px;}
       .rg-car.has-game:active{transform:scale(0.93);}
+      .rg-score{ font-size:13px; font-weight: bold; color:white;background:rgba(0,0,0,0.35);padding:1px 3px;border-radius:3px; display: block}
       .rg-clear-ind{position:absolute;left:50%;top:0;bottom:0;transform:translateX(-50%);
         width:30px;border-left:2.5px dashed rgba(255,255,255,0.2);border-right:2.5px dashed rgba(255,255,255,0.2);
         pointer-events:none;transition:border-color 0.3s;z-index:5;}
@@ -173,7 +174,14 @@
           team = comptetior;
         }
          const hypothetical = hypotheticals && hypotheticals[game?.idx];
-        if (game && onAction) {
+      if(hypothetical){
+          const scoreDiv = document.createElement("div");
+          scoreDiv.className = "rg-score";
+          console.log(hypothetical)
+          scoreDiv.textContent = hypothetical[0] + ":" + hypothetical[1];
+          el.appendChild(scoreDiv);
+        }
+         if (game && onAction) {
           el.classList.add('has-game');
           el.addEventListener('click', () => openPopup(game, hypothetical, games.length - 1 - i, onAction, team));
         }
@@ -307,8 +315,6 @@
   window.renderRettungsgasse = function (containerId, rows, options) {
     options = options || {};
     injectStyles();
-
-    console.log(rows)
 
     const container = document.getElementById(containerId);
     if (!container) { console.error('renderRettungsgasse: container not found:', containerId); return; }
