@@ -337,17 +337,7 @@
 
     const amb = document.getElementById(`${prefix}-amb`);
     if (amb) amb.style.top = ambTopPx(ambAt, rows.length) + 'px';
-    // if (amb) {
-    //   amb.style.transition = 'none';
-    //   amb.style.top = ambTopPx(-1, rows.length) + 'px';
-    //   requestAnimationFrame(() => {
-    //     requestAnimationFrame(() => {  // zwei rAF nötig damit transition greift
-    //       amb.style.transition = '';
-    //       amb.style.top = ambTopPx(ambAt, rows.length) + 'px';
-    //     });
-    //   });
-    // }
-
+    
     const progress = ambAt < 0 ? 0 : Math.min(ambAt / rows.length, 1);
     const prog = document.getElementById(`${prefix}-prog`);
     if (prog) prog.style.width = (progress * 100) + '%';

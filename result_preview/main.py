@@ -263,22 +263,21 @@ def home():
         for competitor in left_competitors
     }   
 
-    # FIXME
-    comp_team = left_competitors[0]
-    current_competitor_games = all_competitor_games[comp_team]
+    all_grids = {}
 
-    mbc_rettungsgasse: Rettungsgasse
-    if not comp_team in _grid_state or _grid_state[comp_team] == {}:
-        mbc_rettungsgasse = Rettungsgasse(loewen_games_left, wins_of_team(comp_team) - loewen_wins)
-        _grid_state[comp_team] = mbc_rettungsgasse
-        mbc_rettungsgasse.init_grid(loewen_pending, current_competitor_games)
-    else:
-        mbc_rettungsgasse = _grid_state[comp_team]
+    for comp_team in left_competitors:
+        current_rettungsgasse: Rettungsgasse
+        if comp_team not in _grid_state or _grid_state[comp_team] == {}:
+            current_rettungsgasse = Rettungsgasse(loewen_games_left, wins_of_team(comp_team) - loewen_wins)
+            _grid_state[comp_team] = current_rettungsgasse
+            current_rettungsgasse.init_grid(loewen_pending, all_competitor_games[comp_team])
+        else:
+            current_rettungsgasse = _grid_state[comp_team]
 
-    grid = mbc_rettungsgasse.grid
-   
+        all_grids[comp_team] = current_rettungsgasse.grid
+
     return render_template('index.html',
-                           grid=list(reversed(grid)),
+                           all_grids={team_name: list(reversed(grid)) for team_name, grid in all_grids.items()},
                            lion_games=list(reversed(loewen_pending)),  # reverse to match grid orientation
                            all_competitor_games = {team_name: list(reversed(comp_game)) for team_name, comp_game in all_competitor_games.items()},
                            all_team_names=all_team_names,
