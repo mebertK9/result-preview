@@ -70,7 +70,6 @@ class Rettungsgasse:
                 f"Invalid kind or action: kind={kind!r}, s={s!r}"
             )
 
-        # if r < self.mandatory_rows:
         action_g = s if kind == "G" else None
         action_l = s if kind == "L" else None
 
@@ -98,16 +97,6 @@ class Rettungsgasse:
                     to_move["lane"] = 3
                     self.grid[r][3] = to_move
                     self.grid[r][2] = {}
-        # else:
-        #     if self._is_lion(self.grid[r][1]):
-        #         to_move = self.grid[r][1]
-        #         # if s == "S":
-        #         to_move["lane"] = 0
-        #         self.grid[r][0] = to_move
-        #         self.grid[r][1] = {}
-        #         if s == "N":
-        #             self._place_in_mandatory_target(to_move)
-        #                 # self.grid[r][2] = {}
 
         return self.grid
 
