@@ -11,6 +11,8 @@ that existing data is not lost when you switch over.
 """
 
 import os
+import threading
+import copy
 import requests
 
 _BIN_URL = "https://api.jsonbin.io/v3/b"
@@ -90,4 +92,11 @@ def save_user_state(username: str, state: dict) -> None:
         "selected_teams": sorted(state["selected_teams"]),
         "compare_teams":  sorted(state["compare_teams"])
     }
-    _push_remote(_cache)
+    cache_dump = copy.deepcopy(_cache)
+    
+    threading.Thread(
+        target=_push_remote,
+        args=(cache_dump,),
+        daemon=True
+    ).start()
+    
