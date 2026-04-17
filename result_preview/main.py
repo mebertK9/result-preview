@@ -131,7 +131,7 @@ def write_games_py():
         f.write(suffix)
 
 # ── Auth routes ───────────────────────────────────────────────────────────────
- 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login_page():
     if current_user.is_authenticated:
@@ -143,10 +143,21 @@ def login_page():
         pw_hash = USERS.get(username)
         if pw_hash and check_password_hash(pw_hash, password):
             login_user(User(username), remember=True)
+            # Nils gets the special treatment
+            if username == 'Nils':
+                return redirect(url_for('nils_gate'))
             return redirect(url_for('home'))
         error = "Benutzername oder Passwort falsch."
     return render_template('login.html', error=error)
- 
+
+@app.route('/nils-gate')
+@login_required
+def nils_gate():
+    # Only Nils may enter here — everyone else goes straight home
+    if current_user.id != 'Nils':
+        return redirect(url_for('home'))
+    return render_template('nils_gate.html')
+
 @app.route('/logout')
 @login_required
 def logout():

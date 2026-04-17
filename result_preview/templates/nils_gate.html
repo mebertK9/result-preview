@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Willkommen, Nils 👋</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Stage 1: Fullscreen image ── */
+    #stage-image {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #stage-image img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 0 60px rgba(255,255,255,0.1);
+      transition: transform 0.1s ease;
+    }
+
+    #stage-image img:hover { transform: scale(1.01); }
+
+    #click-hint {
+      position: absolute;
+      bottom: 32px;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.9rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50%       { opacity: 1; }
+    }
+
+    /* ── Popup base ── */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+
+    .popup-overlay.active { display: flex; }
+
+    .popup-box {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 40px 44px;
+      max-width: 520px;
+      width: 90%;
+      color: #e8e8e8;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .popup-box h2 {
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .popup-box p {
+      font-size: 1rem;
+      line-height: 1.65;
+      color: #ccc;
+      margin-bottom: 24px;
+    }
+
+    /* ── Checkbox row ── */
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      cursor: pointer;
+      user-select: none;
+      color: #bbb;
+      font-size: 0.95rem;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #4a9eff;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Button ── */
+    .btn-ok {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s, transform 0.1s;
+      background: #4a9eff;
+      color: #fff;
+    }
+
+    .btn-ok:disabled {
+      background: #333;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .btn-ok:not(:disabled):hover {
+      background: #3385e0;
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Stage 1: Click the image -->
+  <div id="stage-image" onclick="showPopup1()">
+    <img src="{{ url_for('static', filename='Nils.png') }}" alt="Nils">
+    <span id="click-hint">Klick mich an 👆</span>
+  </div>
+
+  <!-- Popup 1: Info + checkbox confirmation -->
+  <div class="popup-overlay" id="popup1">
+    <div class="popup-box">
+      <h3>
+        Lieber Nils,
+      </h3>
+      <p>
+        es ist nicht schlimm, dass Du zu blöde bist, diese perfekt konzipierte, intiuitiv bedienbare App zu durchdringen.
+          Unter Freunen ein paar Infos zum Konzept.
+      </p>
+      <p>
+        Die <i>Basketball Löwen Braunschweig</i> müssen noch zwei Mannschaften überholen, um den Klassenerhalt zu schaffen.
+         Das ist je nach Gegner unterschiedlich schwer. Der <i>MBC</i> muss z.B. alles verlieren, <i>die Löwen</i> 
+         wiederum alles gewinnen (muss alles passen!). Bei <i>Jena</i> haben wir zwei Spiele Puffer.
+      </p>
+      <p>
+        Ein Löwensieg lässt das rechte Auto an den Rand fahren, eine Niederlage des Kontrahenten den linken.
+        Passiert das Gegenteil, versperren weitere Autos = weitere Pflichtsiege/-niederlagen den Weg.
+         Ist der Rückstand aufgeholt, kommt der Rettungswage durch zum Löwen.
+      </p>
+      <p>
+        WIE DOOF MUSS MAN SEIN, UM DAS NICHT AUF ANHIEB ZU BEGREIFEN???
+      </p>
+      <p>
+        Leider fehlt noch die Meta-Auswertung, ob genug Rettungsgassen für den Klassenerhalt frei sind.
+      </p>
+      <label class="checkbox-row">
+        <input type="checkbox" id="confirm-check" onchange="toggleOkBtn()">
+        Ist ja gut!
+      </label>
+      <button class="btn-ok" id="btn-popup1" disabled onclick="showPopup2()">
+        Gut!
+      </button>
+    </div>
+  </div>
+
+  <!-- Popup 2: Second info, then into the app -->
+  <div class="popup-overlay" id="popup2">
+    <div class="popup-box">
+      <h2>🙃 Schlechte Nachrichten 🙃</h2>
+      <p>
+        <!-- TODO: Zweiter Info-Text hier eintragen -->
+        Dass Du das vohrherige Fenster akzeptiert hast, macht keinen Unterschied. Du musst Dich immer wieder durchklicken.
+      </p>
+      <button class="btn-ok" onclick="enterApp()">
+        Gern geschehen!
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function showPopup1() {
+      document.getElementById('stage-image').style.display = 'none';
+      document.getElementById('popup1').classList.add('active');
+    }
+
+    function toggleOkBtn() {
+      const checked = document.getElementById('confirm-check').checked;
+      document.getElementById('btn-popup1').disabled = !checked;
+    }
+
+    function showPopup2() {
+      document.getElementById('popup1').classList.remove('active');
+      // Reset checkbox for next time (flow always repeats)
+      document.getElementById('confirm-check').checked = false;
+      document.getElementById('btn-popup1').disabled = true;
+      document.getElementById('popup2').classList.add('active');
+    }
+
+    function enterApp() {
+      window.location.href = '/';
+    }
+  </script>
+
+</body>
+</html>
