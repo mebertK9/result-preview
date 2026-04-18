@@ -133,6 +133,138 @@
             font-weight: bold;
         }
 
+        /* ---- Rescue race section ---- */
+        .rescue-banner {
+            background: #1a1a2e;
+            color: #eee;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin: 10px 0 14px;
+        }
+        .rescue-banner-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .rescue-banner-sub {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        .rescue-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .rescue-chip {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            color: white;
+        }
+        .chip-green  { background: #1d7a50; }
+        .chip-yellow { background: #b07b00; }
+        .chip-red    { background: #a93226; }
+
+        .rescue-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .rescue-card {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .rescue-card.status-green  { border-color: #2d9e6b; }
+        .rescue-card.status-yellow { border-color: #d4a000; }
+        .rescue-card.status-red    { border-color: #c0392b; }
+
+        .rc-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .rc-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-green  .rc-dot { background: #2d9e6b; }
+        .status-yellow .rc-dot { background: #d4a000; }
+        .status-red    .rc-dot { background: #c0392b; }
+
+        .rc-team { font-weight: bold; font-size: 0.95rem; flex: 1; }
+        .rc-rank { font-size: 0.8rem; color: #888; }
+
+        .rc-scoreline {
+            padding: 5px 14px 0;
+            font-size: 0.83rem;
+            color: #555;
+        }
+        .rc-gap-pos { color: #c0392b; font-weight: bold; }
+        .rc-gap-zero { color: #888; }
+        .rc-gap-neg  { color: #1d7a50; font-weight: bold; }
+
+        .rc-body { padding: 10px 14px 12px; }
+
+        .rc-todo-label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .rc-todo-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 5px;
+            font-size: 0.87rem;
+            align-items: flex-start;
+        }
+        .rc-todo-icon { flex-shrink: 0; line-height: 1.4; }
+        .rc-todo-must { color: #333; }
+        .rc-todo-optional { color: #666; }
+        .rc-todo-sub {
+            font-size: 0.78rem;
+            color: #999;
+            margin-top: 1px;
+        }
+        .rc-remaining {
+            font-size: 0.79rem;
+            color: #888;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .rc-direct {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .rc-direct-label {
+            font-size: 0.79rem;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .rc-match {
+            font-size: 0.85rem;
+            color: #444;
+            padding: 2px 0;
+        }
+        .rc-match.bsw-won  { color: #1d7a50; font-weight: bold; }
+        .rc-match.bsw-lost { color: #c0392b; }
+        .rc-match.pending  { color: #aaa; }
+
         /* ---- DV checkbox in table ---- */
         .dv-check {
             width: 22px;
@@ -329,8 +461,6 @@
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
 
- 
-
     <details open>
         <summary>Auswahl Teams</summary>
         <h2>Spiele anzeigen für...</h2>
@@ -349,6 +479,173 @@
             </div>
         </form>
     </details>
+
+    {% if rescue %}
+    <details open>
+        <summary>🦁 Rettungsrennen</summary>
+
+        <!-- ── Status Banner ── -->
+        <div class="rescue-banner">
+            <div class="rescue-banner-title">
+                🦁 BB Löwen Braunschweig — aktuell Platz {{ rescue.bsw_rank }}
+                &nbsp;·&nbsp; {{ rescue.bsw_wins }} Siege &nbsp;·&nbsp; {{ rescue.bsw_games_left }} Spiel(e) verbleibend
+            </div>
+            <div class="rescue-banner-sub">
+                {% if rescue.teams_to_overtake == 0 %}
+                ✅ Aktuell auf Kurs für den Klassenerhalt (Platz {{ rescue.safety_rank }} oder besser)!
+                {% else %}
+                Noch <strong>{{ rescue.teams_to_overtake }}</strong> Team(s) zu überholen
+                für Platz {{ rescue.safety_rank }} (Klassenerhalt).
+                {% if rescue.green_count > 0 %}
+                {{ rescue.green_count }} bereits überholt.
+                {% endif %}
+                {% endif %}
+            </div>
+            <div class="rescue-chips">
+                {% for card in rescue.cards %}
+                <span class="rescue-chip chip-{{ card.status }}">
+                    {{ sn(card.team) }}
+                    {% if card.status == 'green' %}✅
+                    {% elif card.status == 'yellow'%}🟡
+                    {% elif card.status == 'red' %}🔴{% endif %}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ── Competitor Cards ── -->
+        <div class="rescue-cards">
+            {% for card in rescue.cards %}
+            <div class="rescue-card status-{{ card.status }}">
+
+                <!-- Header -->
+                <div class="rc-head">
+                    <div class="rc-dot"></div>
+                    <div class="rc-team">{{ sn(card.team) }}</div>
+                    <div class="rc-rank">Platz {{ card.comp_rank }}</div>
+                </div>
+
+                <!-- Score line -->
+                <div class="rc-scoreline">
+                    🦁 Löwen {{ rescue.bsw_wins }} Siege
+                    &nbsp;|&nbsp;
+                    {{ sn(card.team) }} {{ card.comp_wins }} Siege
+                    &nbsp;—&nbsp;
+                    {% if card.gap > 0 %}
+                    <span class="rc-gap-pos">Rückstand: {{ card.gap }} Sieg(e)</span>
+                    {% elif card.gap == 0 %}
+                    <span class="rc-gap-zero">Gleichstand (Direktvergleich entscheidet)</span>
+                    {% else %}
+                    <span class="rc-gap-neg">Löwen {{ -card.gap }} Sieg(e) vorne</span>
+                    {% endif %}
+                </div>
+
+                <div class="rc-body">
+
+                    {% if card.status == 'green' %}
+                    <!-- Already overtaken -->
+                    <div class="rc-todo-row">
+                        <span class="rc-todo-icon">✅</span>
+                        <span class="rc-todo-optional">
+                            Die Löwen liegen aktuell vor {{ sn(card.team) }}.
+                            Solange die Ergebnisse so bleiben, ist dieses Rennen gewonnen.
+                        </span>
+                    </div>
+
+                    {% else %}
+                    <!-- Active chase -->
+                    <div class="rc-todo-label">Was noch gebraucht wird</div>
+
+                    {% if card.min_bsw_wins == 0 and card.min_comp_losses == 0 %}
+                    <!-- Flexible: any combination works -->
+                    <div class="rc-todo-row">
+                        <span class="rc-todo-icon">⚽</span>
+                        <span class="rc-todo-must">
+                            Mind. <strong>{{ card.needed }}</strong> günstige Ergebnis(se) insgesamt
+                            (Löwen-Siege + {{ sn(card.team) }}-Niederlagen, beliebig kombiniert).
+                        </span>
+                    </div>
+
+                    {% else %}
+                    {% if card.min_bsw_wins > 0 %}
+                    <div class="rc-todo-row">
+                        <span class="rc-todo-icon">⚠️</span>
+                        <div>
+                            <div class="rc-todo-must">
+                                Die Löwen müssen noch mind. <strong>{{ card.min_bsw_wins }}×</strong> gewinnen.
+                            </div>
+                            <div class="rc-todo-sub">
+                                (Pflicht — selbst wenn {{ sn(card.team) }} alle {{ card.comp_games_left }}
+                                Spiele verliert)
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="rc-todo-row">
+                        <span class="rc-todo-icon">☑️</span>
+                        <span class="rc-todo-optional">
+                            Die Löwen müssen nicht zwingend gewinnen — aber jeder Sieg hilft.
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    {% if card.min_comp_losses > 0 %}
+                    <div class="rc-todo-row">
+                        <span class="rc-todo-icon">⚠️</span>
+                        <div>
+                            <div class="rc-todo-must">
+                                {{ sn(card.team) }} muss noch mind. <strong>{{ card.min_comp_losses }}×</strong> verlieren.
+                            </div>
+                            <div class="rc-todo-sub">
+                                (Pflicht — selbst wenn die Löwen alle {{ card.bsw_games_left }}
+                                Spiele gewinnen)
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="rc-todo-row">
+                        <span class="rc-todo-icon">☑️</span>
+                        <span class="rc-todo-optional">
+                            {{ sn(card.team) }} muss nicht zwingend verlieren — aber jede Niederlage hilft.
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    <div class="rc-remaining">
+                        Löwen: {{ card.bsw_games_left }} offene Spiel(e) &nbsp;·&nbsp;
+                        {{ sn(card.team) }}: {{ card.comp_games_left }} offene Spiel(e)
+                    </div>
+                    {% endif %}
+
+                    <!-- Direct matches -->
+                    {% if card.direct_matches %}
+                    <div class="rc-direct">
+                        <div class="rc-direct-label">⚔️ Direktduelle (ausstehend)</div>
+                        {% for m in card.direct_matches %}
+                        {% set bsw_won = m.has_hypo and m.bsw_score is not none and m.bsw_score > m.opp_score %}
+                        {% set bsw_lost = m.has_hypo and m.bsw_score is not none and m.bsw_score < m.opp_score %} <div
+                            class="rc-match {% if bsw_won %}bsw-won{% elif bsw_lost %}bsw-lost{% elif not m.has_hypo %}pending{% endif %}">
+                            {% if m.bsw_is_home %}🦁 Löwen vs {{ sn(card.team) }}
+                            {% else %}{{ sn(card.team) }} vs 🦁 Löwen{% endif %}
+                            {% if m.has_hypo %}
+                            &rarr; {{ m.bsw_score }}:{{ m.opp_score }}
+                            {% if bsw_won %}✓{% elif bsw_lost %}✗{% endif %}
+                            {% else %}
+                            <em>(kein Ergebnis eingetragen)</em>
+                            {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+
+    </details>
+    {% endif %}
 
     <details open>
         <summary>Kalkulator</summary>
