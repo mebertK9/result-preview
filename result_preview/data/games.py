@@ -24,7 +24,7 @@ saison_25_26 = [
     ("Bayern München", "Chemnitz 99ers", 91, 77),
     ("EWE Baskets Oldenburg", "Rostock Seawolves", 81, 79),
     ("Science City Jena", "BB Löwen Braunschweig", 82, 93),
-    ("Fitness First Würzburg Baskets", "Skyliners Frankfurt"),
+    ("Fitness First Würzburg Baskets", "Skyliners Frankfurt", 80, 66),
     ("Chemnitz 99ers", "Science City Jena"),
     ("BMA365 Bamberg Baskets", "EWE Baskets Oldenburg"),
     ("MLP Academics Heidelberg", "MHP RIESEN Ludwigsburg"),
