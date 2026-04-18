@@ -13,7 +13,7 @@ from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
 from data.persistence import load_user_state, save_user_state, load_stats
-from static.constants import LOEWEN 
+from static.constants import LOEWEN, RELEGATION_SPOTS
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")
@@ -47,6 +47,111 @@ DEFAULT_TEAMS = {
     "Science City Jena",
     "SYNTAINICS MBC",
 }
+
+def compute_rescue_analysis(
+    hypothetical: dict,
+    loewen_pending: list,
+    all_competitor_games: dict,
+) -> dict | None:
+    """
+    Compute relegation fight status from the Löwen's perspective.
+    Uses pre-filtered loewen_pending and all_competitor_games as source of truth
+    so competitor selection and game counts stay consistent with the rest of the view.
+    """
+    full_standings = compute_standings(hypothetical)
+    total_teams = len(full_standings)
+    safety_rank = total_teams - RELEGATION_SPOTS
+
+    bsw_rank = bsw_wins = None
+    for rank, (team, stats) in enumerate(full_standings, 1):
+        if team.name == LOEWEN:
+            bsw_rank, bsw_wins = rank, stats.wins
+            break
+
+    if bsw_rank is None:
+        return None
+
+    # Only games with no result at all yet (neither confirmed nor hypothetical)
+    bsw_games_left = sum(1 for g in loewen_pending if g["idx"] not in hypothetical)
+    loewen_idx_set = {g["idx"] for g in loewen_pending}
+
+    cards = []
+    for comp_name, comp_game_list in all_competitor_games.items():
+        actual_games = [g for g in comp_game_list if g is not None]
+        comp_games_left = sum(1 for g in actual_games if g["idx"] not in hypothetical)
+
+        comp_rank = comp_wins = None
+        for rank, (team, stats) in enumerate(full_standings, 1):
+            if team.name == comp_name:
+                comp_rank, comp_wins = rank, stats.wins
+                break
+
+        if comp_rank is None:
+            continue
+
+        gap = comp_wins - bsw_wins
+
+        # Direct matches: game idx appears in both sides' remaining lists
+        comp_idx_set = {g["idx"] for g in actual_games}
+        direct_matches = []
+        for g in loewen_pending:
+            if g["idx"] not in comp_idx_set:
+                continue
+            i = g["idx"]
+            bsw_is_home = g["team1"] == LOEWEN
+            has_hypo = i in hypothetical
+            bsw_score = opp_score = None
+            if has_hypo:
+                s = hypothetical[i]
+                bsw_score = s[0 if bsw_is_home else 1]
+                opp_score = s[1 if bsw_is_home else 0]
+            direct_matches.append({
+                "idx": i,
+                "bsw_is_home": bsw_is_home,
+                "has_hypo": has_hypo,
+                "bsw_score": bsw_score,
+                "opp_score": opp_score,
+            })
+
+        if comp_rank > bsw_rank:
+            status = "green"
+        elif bsw_games_left + comp_games_left < gap + 1:
+            status = "grey"   # hypotheticals may have widened the gap beyond reach
+        elif gap <= 2:
+            status = "yellow"
+        else:
+            status = "red"
+
+        needed = max(0, gap + 1)
+        cards.append({
+            "team": comp_name,
+            "comp_rank": comp_rank,
+            "comp_wins": comp_wins,
+            "gap": gap,
+            "bsw_games_left": bsw_games_left,
+            "comp_games_left": comp_games_left,
+            "status": status,
+            "direct_matches": direct_matches,
+            "needed": needed,
+            "min_bsw_wins": max(0, needed - comp_games_left),
+            "min_comp_losses": max(0, needed - bsw_games_left),
+        })
+
+    status_order = {"yellow": 0, "red": 1, "green": 2}
+    visible = sorted(
+        (c for c in cards if c["status"] != "grey"),
+        key=lambda c: (status_order.get(c["status"], 3), c["gap"]),
+    )
+
+    return {
+        "bsw_rank": bsw_rank,
+        "bsw_wins": bsw_wins,
+        "bsw_games_left": bsw_games_left,
+        "safety_rank": safety_rank,
+        "teams_to_overtake": max(0, bsw_rank - safety_rank),
+        "green_count": sum(1 for c in visible if c["status"] == "green"),
+        "cards": visible,
+    }
 
 # Derived game lists (rebuilt by finalize_game).
 # hypothetical is now keyed by saison_25_26 index — not pending_games index.
@@ -291,10 +396,12 @@ def home():
 
         all_grids[comp_team] = current_rettungsgasse.grid
 
+    rescue = compute_rescue_analysis(hypothetical, loewen_pending, all_competitor_games)
+
     return render_template('index.html',
-                           all_grids={team_name: list(reversed(grid)) for team_name, grid in all_grids.items()},
-                           lion_games=list(reversed(loewen_pending)),  # reverse to match grid orientation
-                           all_competitor_games = {team_name: list(reversed(comp_game)) for team_name, comp_game in all_competitor_games.items()},
+                           all_grids=all_grids,
+                           lion_games=loewen_pending,
+                           all_competitor_games = all_competitor_games,
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
@@ -303,6 +410,7 @@ def home():
                            hypothetical=hypothetical,
                            hypo_count=hypo_count,
                            hypo_wins=hypo_wins,
+                           rescue=rescue,
                            visible_completed=visible_completed,
                            visible_pending=visible_pending,
                            is_admin=(current_user.id == ADMIN_USER))
@@ -357,60 +465,6 @@ def finalize_game(idx):
 
     write_games_py()
     return redirect('/')
-
-@app.route("/move", methods=["POST"])
-@login_required
-def move():
-    row_to_transform = request.json["row"]
-    game = request.json["game"]
-    team = request.json["affected_team"]
-    competitor = request.json["competitor"]
-    score1 = request.json["score1"]
-    score2 = request.json["score2"]
-
-    team1 = game["team1"]
-    team2 = game["team2"]
-
-    if LOEWEN == team:
-        lion_or_gegner = "L"
-    elif team in (team1, team2):
-        lion_or_gegner = "G"
-    else:
-        lion_or_gegner = ""
-
-    action = _get_action(team1, team, score1, score2)
-
-    rettungsgasse = _grid_state[competitor]
-    grid = rettungsgasse.apply_action(row_to_transform, lion_or_gegner, action)
-
-    return jsonify(list(reversed(grid)))
-
-def _get_action(team1, team, score1, score2) -> str:
-    if(score1 == None or score2 == None):
-        return ""
-    
-    action=""    
-    home_won = int(score1) > int (score2)
-    if(team == team1):
-        if(home_won):
-            action = "S"
-        else:
-            action = "N"
-    else:
-        if(home_won):
-            action = "N"
-        else:
-            action = "S"
-
-    return action
-
-@app.route("/reset", methods=["POST"])
-@login_required
-def reset():
-    data = request.get_json()
-    team_name = data["team_name"]
-    _grid_state[team_name] = {}
-    return "", 204
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
