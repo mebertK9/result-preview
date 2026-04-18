@@ -10,9 +10,10 @@ from werkzeug.security import check_password_hash
 from models.team import Team
 from data.util.rettungsgasse import Rettungsgasse
 from models.team_stats import TeamStats
-from data.games import saison_25_26, LOEWEN
+from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
-from data.persistence import load_user_state, save_user_state, load_stats  # ← replaces file I/O
+from data.persistence import load_user_state, save_user_state, load_stats
+from static.constants import LOEWEN 
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "change-me-in-production")

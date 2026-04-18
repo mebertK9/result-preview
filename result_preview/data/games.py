@@ -1,5 +1,3 @@
-LOEWEN = "BB Löwen Braunschweig"
-
 saison_25_26 = [
     ("Bayern München", "MHP RIESEN Ludwigsburg"),
     ("Veolia Towers Hamburg", "Rostock Seawolves"),
