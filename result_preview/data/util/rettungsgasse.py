@@ -33,8 +33,9 @@ class Rettungsgasse:
         self.grid = [[{} for _ in range(COLS)] for _ in range(self.rows)]
 
         for r in range(self.mandatory_rows):
-            guest_index = all_comp_games[r]["idx"]
-            self.grid[r][1] = {"idx": guest_index, "type": "left", "lane": 1}
+            if r < len(all_comp_games) and all_comp_games[r] is not None:
+                guest_index = all_comp_games[r]["idx"]
+                self.grid[r][1] = {"idx": guest_index, "type": "left", "lane": 1}
 
             lion_index = lion_games[r]["idx"]
             self.grid[r][2] = {"idx": lion_index, "type": "right", "lane": 2}
