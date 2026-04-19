@@ -26,7 +26,7 @@ saison_25_26 = [
     ("Chemnitz 99ers", "Science City Jena", 76, 73),
     ("BMA365 Bamberg Baskets", "EWE Baskets Oldenburg", 83, 61),
     ("MLP Academics Heidelberg", "MHP RIESEN Ludwigsburg", 73, 83),
-    ("BB Löwen Braunschweig", "SYNTAINICS MBC"),
+    ("BB Löwen Braunschweig", "SYNTAINICS MBC", 112, 93),
     ("Rostock Seawolves", "ratiopharm Ulm"),
     ("Veolia Towers Hamburg", "SC RASTA Vechta"),
     ("VET-CONCEPT Gladiators Trier", "Bayern München"),
