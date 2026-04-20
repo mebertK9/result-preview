@@ -133,138 +133,6 @@
             font-weight: bold;
         }
 
-        /* ---- Rescue race section ---- */
-        .rescue-banner {
-            background: #1a1a2e;
-            color: #eee;
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin: 10px 0 14px;
-        }
-        .rescue-banner-title {
-            font-size: 1rem;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-        .rescue-banner-sub {
-            font-size: 0.85rem;
-            opacity: 0.8;
-            margin-bottom: 10px;
-        }
-        .rescue-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .rescue-chip {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            font-weight: bold;
-            color: white;
-        }
-        .chip-green  { background: #1d7a50; }
-        .chip-yellow { background: #b07b00; }
-        .chip-red    { background: #a93226; }
-
-        .rescue-cards {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .rescue-card {
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-            background: #fff;
-        }
-        .rescue-card.status-green  { border-color: #2d9e6b; }
-        .rescue-card.status-yellow { border-color: #d4a000; }
-        .rescue-card.status-red    { border-color: #c0392b; }
-
-        .rc-head {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 14px;
-            background: #f5f5f5;
-            border-bottom: 1px solid #e8e8e8;
-        }
-        .rc-dot {
-            width: 11px;
-            height: 11px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        .status-green  .rc-dot { background: #2d9e6b; }
-        .status-yellow .rc-dot { background: #d4a000; }
-        .status-red    .rc-dot { background: #c0392b; }
-
-        .rc-team { font-weight: bold; font-size: 0.95rem; flex: 1; }
-        .rc-rank { font-size: 0.8rem; color: #888; }
-
-        .rc-scoreline {
-            padding: 5px 14px 0;
-            font-size: 0.83rem;
-            color: #555;
-        }
-        .rc-gap-pos { color: #c0392b; font-weight: bold; }
-        .rc-gap-zero { color: #888; }
-        .rc-gap-neg  { color: #1d7a50; font-weight: bold; }
-
-        .rc-body { padding: 10px 14px 12px; }
-
-        .rc-todo-label {
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: #555;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-        .rc-todo-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 5px;
-            font-size: 0.87rem;
-            align-items: flex-start;
-        }
-        .rc-todo-icon { flex-shrink: 0; line-height: 1.4; }
-        .rc-todo-must { color: #333; }
-        .rc-todo-optional { color: #666; }
-        .rc-todo-sub {
-            font-size: 0.78rem;
-            color: #999;
-            margin-top: 1px;
-        }
-        .rc-remaining {
-            font-size: 0.79rem;
-            color: #888;
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 1px solid #f0f0f0;
-        }
-        .rc-direct {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #f0f0f0;
-        }
-        .rc-direct-label {
-            font-size: 0.79rem;
-            font-weight: bold;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        .rc-match {
-            font-size: 0.85rem;
-            color: #444;
-            padding: 2px 0;
-        }
-        .rc-match.bsw-won  { color: #1d7a50; font-weight: bold; }
-        .rc-match.bsw-lost { color: #c0392b; }
-        .rc-match.pending  { color: #aaa; }
-
         /* ---- DV checkbox in table ---- */
         .dv-check {
             width: 22px;
@@ -460,6 +328,24 @@
     {% macro sn(full_name) %}{{ name_map.get(full_name, full_name) }}{% endmacro %}
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
+    
+    {% for team_name in all_competitor_games.keys() %}
+    {% set gasse_id = "gasse-" ~ loop.index0 %}
+    <!-- Outer wrapper for {{ team_name }} — never touched by renderRettungsgasse -->
+    <div class="gasse-wrap" id="wrap-{{ gasse_id }}">
+        <div class="gasse-header">vs. {{ sn(team_name) }}</div>
+        <div class="gasse-controls">
+            <button class="btn-rescue" id="btn-rescue-{{ gasse_id }}" onclick="autoPlay('{{ team_name }}')">
+                🚑 Rette den Löwen
+            </button>
+            <button class="btn-reset" onclick="resetGrid('{{ team_name }}')">
+                🔄 Zurücksetzen
+            </button>
+        </div>
+        <!-- renderRettungsgasse only ever touches this div -->
+        <div id="{{ gasse_id }}"></div>
+    </div>
+    {% endfor %}
 
     <details open>
         <summary>Auswahl Teams</summary>
@@ -810,6 +696,134 @@
         })();
     </script>
 
+   <script src="/static/rettungsgasse.js"></script>
+
+    <script>
+        // all_grids: dict keyed by competitor name → initial grid rows for that lane.
+        // Requires main.py to pass all_grids=rettungsgasse_manager.get_all_grids() to the template.
+        const all_grids = {{ all_grids | tojson }};
+        const lionGames = {{ lion_games | tojson }};
+        const all_competitor_games = {{ all_competitor_games | tojson }};
+        const hypothetical = {{ hypothetical | tojson }};
+
+        // Ordered list of competitors — matches the Jinja loop.index0 used for container IDs
+        const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
+
+        // Derive the render-container ID for a given competitor (mirrors Jinja: "gasse-" ~ loop.index0)
+        function containerIdFor(competitor) {
+            return 'gasse-' + competitorNames.indexOf(competitor);
+        }
+
+        // Returns an onAction callback bound to a specific competitor and its container
+        function makeOnAction(competitor) {
+            const containerId = containerIdFor(competitor);
+            return async function onAction(game, rowIndex, score1, score2, team) {
+                if (score1 !== null && score2 !== null) {
+                    await fetch(`/set_score/${game.idx}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: `score1=${score1}&score2=${score2}`
+                    });
+                }
+                const res = await fetch("/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ row: rowIndex, game, affected_team: team, competitor, score1, score2 })
+                });
+                const newRows = await res.json();
+                renderRettungsgasse(containerId, newRows, {
+                    games: lionGames,
+                    competitor_games: all_competitor_games[competitor],
+                    competitor,
+                    hypotheticals: hypothetical,
+                    onAction: makeOnAction(competitor)
+                });
+            };
+        }
+
+        // Initial render for every competitor lane
+        competitorNames.forEach(function (competitor) {
+            const containerId = containerIdFor(competitor);
+            renderRettungsgasse(containerId, all_grids[competitor], {
+                games: lionGames,
+                competitor_games: all_competitor_games[competitor],
+                competitor,
+                hypotheticals: hypothetical,
+                onAction: makeOnAction(competitor)
+            });
+        });
+
+        async function autoPlay(competitor) {
+            const containerId = containerIdFor(competitor);
+            const btn = document.getElementById('btn-rescue-' + containerId);
+            btn.disabled = true;
+
+            // Collect moves from both lion and competitor games
+            const moves = [];
+            const seen = new Set();
+
+            function collectMoves(gamesList, team) {
+                for (let i = gamesList.length - 1; i >= 0; i--) {
+                    const game = gamesList[i];
+                    if (!game) continue;
+                    const hypo = hypothetical[game.idx];
+                    if (!hypo) continue;
+                    const key = `${game.idx}-${team}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    moves.push({
+                        rowIndex: gamesList.length - 1 - i,  // 0 = bottom (closest to ambulance)
+                        game,
+                        team,
+                        competitor,
+                        score1: hypo[0],
+                        score2: hypo[1]
+                    });
+                }
+            }
+
+            collectMoves(lionGames, "BB Löwen Braunschweig");
+            collectMoves(all_competitor_games[competitor], competitor);
+            moves.sort((a, b) => a.rowIndex - b.rowIndex);  // bottom rows first
+
+            let currentRows = all_grids[competitor];
+            for (const move of moves) {
+                const res = await fetch("/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        row: move.rowIndex,
+                        game: move.game,
+                        affected_team: move.team,
+                        competitor: move.competitor,
+                        score1: move.score1,
+                        score2: move.score2
+                    })
+                });
+                currentRows = await res.json();
+                renderRettungsgasse(containerId, currentRows, {
+                    games: lionGames,
+                    competitor_games: all_competitor_games[competitor],
+                    competitor,
+                    hypotheticals: hypothetical,
+                    onAction: makeOnAction(competitor)
+                });
+                await new Promise(r => setTimeout(r, 700));  // wait for ambulance animation
+            }
+
+            btn.disabled = false;
+        }
+
+        async function resetGrid(teamName) {
+            await fetch("/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ team_name: teamName })
+            });
+            window.location.reload();
+        }
+
+    </script>
    
 
 </body>
