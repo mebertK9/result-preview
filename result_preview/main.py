@@ -295,9 +295,9 @@ def home():
     
 
     return render_template('index.html',
-                           all_grids=all_grids,
-                           lion_games=loewen_pending,
-                           all_competitor_games = all_competitor_games,
+                           all_grids={team_name: list(reversed(grid)) for team_name, grid in all_grids.items()},
+                           lion_games=list(reversed(loewen_pending)),  # reverse to match grid orientation
+                           all_competitor_games = {team_name: list(reversed(comp_game)) for team_name, comp_game in all_competitor_games.items()},
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
