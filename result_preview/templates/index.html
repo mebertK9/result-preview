@@ -246,6 +246,155 @@
             background: #888;
         }
 
+        /* ---- Dashboard cards ---- */
+        .dash-card {
+            border: 1px solid #d0d0d0;
+            border-radius: 10px;
+            padding: 14px 14px 10px;
+            margin-bottom: 14px;
+            background: #fafafa;
+        }
+
+        .dash-header {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        /* ---- Segment bars ---- */
+        .dash-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .dash-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dash-bar-label {
+            font-size: 0.8rem;
+            color: #555;
+            min-width: 60px;
+            flex-shrink: 0;
+        }
+
+        .dash-bar-segs {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+
+        .dash-seg {
+            width: 22px;
+            height: 20px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .seg-pending {
+            background: #d0d0d0;
+        }
+
+        .seg-win {
+            background: #3aaa6e;
+        }
+
+        .seg-loss {
+            background: #d85a30;
+        }
+
+        .dash-bar-count {
+            font-size: 0.75rem;
+            color: #888;
+            margin-left: 2px;
+        }
+
+        /* ---- Gap badge ---- */
+        .dash-gap-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: bold;
+        }
+
+        .gap-safe {
+            background: #c6f0d8;
+            color: #1a6e41;
+        }
+
+        .gap-ahead {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .gap-behind {
+            background: #fdecea;
+            color: #b71c1c;
+        }
+
+        /* ---- Score inputs inside card ---- */
+        .dash-inputs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .dash-input-section {
+            flex: 1 1 200px;
+            min-width: 0;
+        }
+
+        .dash-section-title {
+            font-size: 0.78rem;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 5px;
+        }
+
+        .dash-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .dash-score-table th,
+        .dash-score-table td {
+            padding: 5px 6px;
+            border: 1px solid #e0e0e0;
+            font-size: 0.85rem;
+        }
+
+        /* ---- Mini standings ---- */
+        .dash-mini-standings {
+            margin-top: 4px;
+        }
+
+        .dash-mini-standings table {
+            margin: 5px 0 0;
+        }
+
+        .dash-row-loewen {
+            background: #fff3cd;
+            font-weight: bold;
+        }
+
+        .dash-row-comp {
+            background: #ddeeff;
+            font-weight: bold;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 8px;
@@ -328,23 +477,187 @@
     {% macro sn(full_name) %}{{ name_map.get(full_name, full_name) }}{% endmacro %}
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
-    
-    {% for team_name in all_competitor_games.keys() %}
-    {% set gasse_id = "gasse-" ~ loop.index0 %}
-    <!-- Outer wrapper for {{ team_name }} — never touched by renderRettungsgasse -->
-    <div class="gasse-wrap" id="wrap-{{ gasse_id }}">
-        <div class="gasse-header">vs. {{ sn(team_name) }}</div>
-        <div class="gasse-controls">
-            <button class="btn-rescue" id="btn-rescue-{{ gasse_id }}" onclick="autoPlay('{{ team_name }}')">
-                🚑 Rette den Löwen
-            </button>
-            <button class="btn-reset" onclick="resetGrid('{{ team_name }}')">
-                🔄 Zurücksetzen
-            </button>
+
+    {% for comp_team, comp in competitor_data.items() %}
+    <div class="dash-card">
+
+        <div class="dash-header">vs. {{ sn(comp_team) }}</div>
+
+        {# ── Segment bars ─────────────────────────────────────────────── #}
+        <div class="dash-bars">
+
+            {# Competitor remaining games #}
+            <div class="dash-bar-row">
+                <span class="dash-bar-label">{{ sn(comp_team) }}</span>
+                <div class="dash-bar-segs">
+                    {% for game in comp.comp_pending %}
+                    {% if game.idx in hypothetical %}
+                    {% if game.team1 == comp_team %}
+                    {% set comp_won = hypothetical[game.idx][0] > hypothetical[game.idx][1] %}
+                    {% else %}
+                    {% set comp_won = hypothetical[game.idx][1] > hypothetical[game.idx][0] %}
+                    {% endif %}
+                    <div class="dash-seg {% if comp_won %}seg-win{% else %}seg-loss{% endif %}"
+                        title="{{ hypothetical[game.idx][0] }}:{{ hypothetical[game.idx][1] }}"></div>
+                    {% else %}
+                    <div class="dash-seg seg-pending" title="offen"></div>
+                    {% endif %}
+                    {% endfor %}
+                    <span class="dash-bar-count">{{ comp.comp_games_left }}</span>
+                </div>
+            </div>
+
+            {# BSW remaining games #}
+            <div class="dash-bar-row">
+                <span class="dash-bar-label">Löwen</span>
+                <div class="dash-bar-segs">
+                    {% for game in loewen_pending_cards %}
+                    {% if game.idx in hypothetical %}
+                    {% if game.team1 == loewen_const %}
+                    {% set bsw_won = hypothetical[game.idx][0] > hypothetical[game.idx][1] %}
+                    {% else %}
+                    {% set bsw_won = hypothetical[game.idx][1] > hypothetical[game.idx][0] %}
+                    {% endif %}
+                    <div class="dash-seg {% if bsw_won %}seg-win{% else %}seg-loss{% endif %}"
+                        title="{{ hypothetical[game.idx][0] }}:{{ hypothetical[game.idx][1] }}"></div>
+                    {% else %}
+                    <div class="dash-seg seg-pending" title="offen"></div>
+                    {% endif %}
+                    {% endfor %}
+                    <span class="dash-bar-count">{{ loewen_games_left }}</span>
+                </div>
+            </div>
+
+            {# Win gap indicator #}
+            {% set gap = comp.mandatory_wins %}
+            {% set max_games = comp.max_games %}
+            <div class="dash-bar-row">
+                <span class="dash-bar-label">Abstand</span>
+                <div class="dash-gap-badge
+                    {%- if gap <= 0 and (-gap) >= max_games %} gap-safe
+                    {%- elif gap <= 0 %} gap-ahead
+                    {%- else %} gap-behind{% endif %}">
+                    {% if gap > 0 %}
+                    Löwen müssen noch <strong>{{ gap }}×</strong> mehr gewinnen
+                    {% elif gap == 0 %}
+                    Gleichstand — Direktvergleich entscheidet
+                    {% else %}
+                    Löwen <strong>{{ -gap }}</strong> Sieg(e) vorne
+                    {%- if (-gap) >= max_games %} &nbsp;✅{% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>{# end .dash-bars #}
+
+        {# ── Score inputs ─────────────────────────────────────────────── #}
+        <div class="dash-inputs">
+
+            {# Competitor games #}
+            <div class="dash-input-section">
+                <div class="dash-section-title">Spiele {{ sn(comp_team) }}</div>
+                <table class="dash-score-table">
+                    {% for game in comp.comp_pending %}
+                    {% set has_hypo = game.idx in hypothetical %}
+                    {% set first_won = has_hypo and hypothetical[game.idx][0] > hypothetical[game.idx][1] %}
+                    {% set second_won = has_hypo and hypothetical[game.idx][1] > hypothetical[game.idx][0] %}
+                    <tr class="{% if has_hypo %}hypo-row{% endif %}">
+                        <td class="team-name {% if first_won %}bold{% endif %}">{{ sn(game.team1) }}</td>
+                        <td class="team-name {% if second_won %}bold{% endif %}">{{ sn(game.team2) }}</td>
+                        <td>
+                            <form class="score-form" method="POST" action="/set_score/{{ game.idx }}">
+                                <input type="number" name="score1" inputmode="numeric"
+                                    value="{% if has_hypo %}{{ hypothetical[game.idx][0] }}{% endif %}" placeholder="–">
+                                <span class="score-sep">:</span>
+                                <input type="number" name="score2" inputmode="numeric"
+                                    value="{% if has_hypo %}{{ hypothetical[game.idx][1] }}{% endif %}" placeholder="–">
+                                <button type="submit" class="btn-set">✓</button>
+                            </form>
+                            {% if has_hypo %}
+                            <a href="/clear_score/{{ game.idx }}" class="btn-clear">✕</a>
+                            {% if is_admin %}
+                            <a href="/finalize/{{ game.idx }}" class="btn-finalize"
+                                title="Spiel festschreiben (nicht revidierbar)"
+                                onclick="return confirm('Ergebnis {{ hypothetical[game.idx][0] }}:{{ hypothetical[game.idx][1] }} dauerhaft festschreiben?')">🔒</a>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            {# BSW games #}
+            <div class="dash-input-section">
+                <div class="dash-section-title">Spiele Löwen</div>
+                <table class="dash-score-table">
+                    {% for game in loewen_pending_cards %}
+                    {% set has_hypo = game.idx in hypothetical %}
+                    {% set first_won = has_hypo and hypothetical[game.idx][0] > hypothetical[game.idx][1] %}
+                    {% set second_won = has_hypo and hypothetical[game.idx][1] > hypothetical[game.idx][0] %}
+                    <tr class="{% if has_hypo %}hypo-row{% endif %}">
+                        <td class="team-name {% if first_won %}bold{% endif %}">{{ sn(game.team1) }}</td>
+                        <td class="team-name {% if second_won %}bold{% endif %}">{{ sn(game.team2) }}</td>
+                        <td>
+                            <form class="score-form" method="POST" action="/set_score/{{ game.idx }}">
+                                <input type="number" name="score1" inputmode="numeric"
+                                    value="{% if has_hypo %}{{ hypothetical[game.idx][0] }}{% endif %}" placeholder="–">
+                                <span class="score-sep">:</span>
+                                <input type="number" name="score2" inputmode="numeric"
+                                    value="{% if has_hypo %}{{ hypothetical[game.idx][1] }}{% endif %}" placeholder="–">
+                                <button type="submit" class="btn-set">✓</button>
+                            </form>
+                            {% if has_hypo %}
+                            <a href="/clear_score/{{ game.idx }}" class="btn-clear">✕</a>
+                            {% if is_admin %}
+                            <a href="/finalize/{{ game.idx }}" class="btn-finalize"
+                                title="Spiel festschreiben (nicht revidierbar)"
+                                onclick="return confirm('Ergebnis {{ hypothetical[game.idx][0] }}:{{ hypothetical[game.idx][1] }} dauerhaft festschreiben?')">🔒</a>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        </div>{# end .dash-inputs #}
+
+        {# ── Mini standings ───────────────────────────────────────────── #}
+        <div class="dash-mini-standings">
+            <div class="dash-section-title">Tabellenausschnitt</div>
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>#</th>
+                        <th>Team</th>
+                        <th>Sp</th>
+                        <th>S</th>
+                        <th>Pkt</th>
+                        <th>K+</th>
+                        <th>K−</th>
+                        <th>Diff</th>
+                    </tr>
+                    {% for rank, name, stats in comp.mini_standings %}
+                    <tr class="
+                        {%- if name == loewen_const %} dash-row-loewen
+                        {%- elif name == comp_team %} dash-row-comp
+                        {%- endif %}">
+                        <td>{{ rank }}</td>
+                        <td class="team-name">{{ sn(name) }}</td>
+                        <td>{{ stats.games }}</td>
+                        <td>{{ stats.wins }}</td>
+                        <td>{{ stats.plus_points() }}:{{ stats.minus_points() }}</td>
+                        <td>{{ stats.points }}</td>
+                        <td>{{ stats.against }}</td>
+                        <td>{{ stats.point_diff() }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
-        <!-- renderRettungsgasse only ever touches this div -->
-        <div id="{{ gasse_id }}"></div>
-    </div>
+
+    </div>{# end .dash-card #}
     {% endfor %}
 
     <details open>
@@ -480,7 +793,8 @@
                         <span class="rc-todo-icon">⚠️</span>
                         <div>
                             <div class="rc-todo-must">
-                                {{ sn(card.team) }} muss noch mind. <strong>{{ card.min_comp_losses }}×</strong> verlieren.
+                                {{ sn(card.team) }} muss noch mind. <strong>{{ card.min_comp_losses }}×</strong>
+                                verlieren.
                             </div>
                             <div class="rc-todo-sub">
                                 (Pflicht — selbst wenn die Löwen alle {{ card.bsw_games_left }}
@@ -696,135 +1010,6 @@
         })();
     </script>
 
-   <script src="/static/rettungsgasse.js"></script>
-
-    <script>
-        // all_grids: dict keyed by competitor name → initial grid rows for that lane.
-        // Requires main.py to pass all_grids=rettungsgasse_manager.get_all_grids() to the template.
-        const all_grids = {{ all_grids | tojson }};
-        const lionGames = {{ lion_games | tojson }};
-        const all_competitor_games = {{ all_competitor_games | tojson }};
-        const hypothetical = {{ hypothetical | tojson }};
-
-        // Ordered list of competitors — matches the Jinja loop.index0 used for container IDs
-        const competitorNames = {{ all_competitor_games.keys() | list | tojson }};
-
-        // Derive the render-container ID for a given competitor (mirrors Jinja: "gasse-" ~ loop.index0)
-        function containerIdFor(competitor) {
-            return 'gasse-' + competitorNames.indexOf(competitor);
-        }
-
-        // Returns an onAction callback bound to a specific competitor and its container
-        function makeOnAction(competitor) {
-            const containerId = containerIdFor(competitor);
-            return async function onAction(game, rowIndex, score1, score2, team) {
-                if (score1 !== null && score2 !== null) {
-                    await fetch(`/set_score/${game.idx}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: `score1=${score1}&score2=${score2}`
-                    });
-                }
-                const res = await fetch("/move", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ row: rowIndex, game, affected_team: team, competitor, score1, score2 })
-                });
-                const newRows = await res.json();
-                renderRettungsgasse(containerId, newRows, {
-                    games: lionGames,
-                    competitor_games: all_competitor_games[competitor],
-                    competitor,
-                    hypotheticals: hypothetical,
-                    onAction: makeOnAction(competitor)
-                });
-            };
-        }
-
-        // Initial render for every competitor lane
-        competitorNames.forEach(function (competitor) {
-            const containerId = containerIdFor(competitor);
-            renderRettungsgasse(containerId, all_grids[competitor], {
-                games: lionGames,
-                competitor_games: all_competitor_games[competitor],
-                competitor,
-                hypotheticals: hypothetical,
-                onAction: makeOnAction(competitor)
-            });
-        });
-
-        async function autoPlay(competitor) {
-            const containerId = containerIdFor(competitor);
-            const btn = document.getElementById('btn-rescue-' + containerId);
-            btn.disabled = true;
-
-            // Collect moves from both lion and competitor games
-            const moves = [];
-            const seen = new Set();
-
-            function collectMoves(gamesList, team) {
-                for (let i = gamesList.length - 1; i >= 0; i--) {
-                    const game = gamesList[i];
-                    if (!game) continue;
-                    const hypo = hypothetical[game.idx];
-                    if (!hypo) continue;
-                    const key = `${game.idx}-${team}`;
-                    if (seen.has(key)) continue;
-                    seen.add(key);
-                    moves.push({
-                        rowIndex: gamesList.length - 1 - i,  // 0 = bottom (closest to ambulance)
-                        game,
-                        team,
-                        competitor,
-                        score1: hypo[0],
-                        score2: hypo[1]
-                    });
-                }
-            }
-
-            collectMoves(lionGames, "BB Löwen Braunschweig");
-            collectMoves(all_competitor_games[competitor], competitor);
-            moves.sort((a, b) => a.rowIndex - b.rowIndex);  // bottom rows first
-
-            let currentRows = all_grids[competitor];
-            for (const move of moves) {
-                const res = await fetch("/move", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        row: move.rowIndex,
-                        game: move.game,
-                        affected_team: move.team,
-                        competitor: move.competitor,
-                        score1: move.score1,
-                        score2: move.score2
-                    })
-                });
-                currentRows = await res.json();
-                renderRettungsgasse(containerId, currentRows, {
-                    games: lionGames,
-                    competitor_games: all_competitor_games[competitor],
-                    competitor,
-                    hypotheticals: hypothetical,
-                    onAction: makeOnAction(competitor)
-                });
-                await new Promise(r => setTimeout(r, 700));  // wait for ambulance animation
-            }
-
-            btn.disabled = false;
-        }
-
-        async function resetGrid(teamName) {
-            await fetch("/reset", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ team_name: teamName })
-            });
-            window.location.reload();
-        }
-
-    </script>
-   
 
 </body>
 

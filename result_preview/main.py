@@ -292,7 +292,41 @@ def home():
 
         all_grids[comp_team] = current_rettungsgasse.grid
 
-    
+    # Build rank lookup from full standings (incorporates current hypotheticals)
+    rank_lookup = {team.name: i + 1 for i, (team, _) in enumerate(full_standings)}
+    bsw_rank = rank_lookup.get(LOEWEN, len(full_standings))
+
+    # Build per-competitor dashboard data for the new card view
+    competitor_data = {}
+    for comp_team in left_competitors:
+        comp_wins_val = wins_of_team(comp_team)
+        mandatory_wins = comp_wins_val - loewen_wins  # > 0: BSW is behind; < 0: BSW is ahead
+
+        comp_pending_raw = [
+            {"idx": idx, "team1": game[0], "team2": game[1]}
+            for idx, game in enumerate(saison_25_26)
+            if is_pending_game_of_team(game, comp_team)
+        ]
+
+        comp_rank = rank_lookup.get(comp_team, len(full_standings))
+
+        # Mini standings slice: one row above the better-ranked team,
+        # one row below the worse-ranked team, clamped to valid indices
+        mini_top = max(0, min(bsw_rank, comp_rank) - 2)          # 0-indexed, inclusive
+        mini_bot = min(len(full_standings), max(bsw_rank, comp_rank) + 1)  # 0-indexed, exclusive
+        mini_standings = [
+            (mini_top + i + 1, team.name, stats)
+            for i, (team, stats) in enumerate(full_standings[mini_top:mini_bot])
+        ]
+
+        competitor_data[comp_team] = {
+            "mandatory_wins": mandatory_wins,
+            "comp_games_left": len(comp_pending_raw),
+            "max_games": max(len(comp_pending_raw), loewen_games_left),
+            "comp_pending": comp_pending_raw,
+            "comp_rank": comp_rank,
+            "mini_standings": mini_standings,
+        }
 
     return render_template('index.html',
                            all_grids={team_name: list(reversed(grid)) for team_name, grid in all_grids.items()},
@@ -309,7 +343,11 @@ def home():
                            rescue={},
                            visible_completed=visible_completed,
                            visible_pending=visible_pending,
-                           is_admin=(current_user.id == ADMIN_USER))
+                           is_admin=(current_user.id == ADMIN_USER),
+                           competitor_data=competitor_data,
+                           bsw_rank=bsw_rank,
+                           loewen_pending_cards=loewen_pending,
+                           loewen_const=LOEWEN)
 
 # ── Score routes ──────────────────────────────────────────────────────────────
 
