@@ -296,6 +296,9 @@ def home():
     rank_lookup = {team.name: i + 1 for i, (team, _) in enumerate(full_standings)}
     bsw_rank = rank_lookup.get(LOEWEN, len(full_standings))
 
+    # BSW's total wins including all hypothetical results (from full_standings)
+    bsw_full_wins = next(stats.wins for team, stats in full_standings if team.name == LOEWEN)
+
     # Build per-competitor dashboard data for the new card view
     competitor_data = {}
     for comp_team in left_competitors:
@@ -310,6 +313,11 @@ def home():
 
         comp_rank = rank_lookup.get(comp_team, len(full_standings))
 
+        # Gap including hypotheticals — detects when catchup is mathematically impossible
+        comp_full_wins = next(stats.wins for team, stats in full_standings if team.name == comp_team)
+        gap_with_hypo = comp_full_wins - bsw_full_wins   # > 0: BSW is behind
+        catchup_impossible = gap_with_hypo > loewen_games_left
+
         # Mini standings slice: one row above the better-ranked team,
         # one row below the worse-ranked team, clamped to valid indices
         mini_top = max(0, min(bsw_rank, comp_rank) - 2)          # 0-indexed, inclusive
@@ -321,6 +329,8 @@ def home():
 
         competitor_data[comp_team] = {
             "mandatory_wins": mandatory_wins,
+            "gap_with_hypo": gap_with_hypo,
+            "catchup_impossible": catchup_impossible,
             "comp_games_left": len(comp_pending_raw),
             "max_games": max(len(comp_pending_raw), loewen_games_left),
             "comp_pending": comp_pending_raw,

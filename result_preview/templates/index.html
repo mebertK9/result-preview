@@ -341,6 +341,11 @@
             color: #b71c1c;
         }
 
+        .gap-impossible {
+            background: #b71c1c;
+            color: #fff;
+        }
+
         /* ---- Score inputs inside card ---- */
         .dash-inputs {
             display: flex;
@@ -534,10 +539,14 @@
             <div class="dash-bar-row">
                 <span class="dash-bar-label">Abstand</span>
                 <div class="dash-gap-badge
-                    {%- if gap <= 0 and (-gap) >= max_games %} gap-safe
+                    {%- if comp.catchup_impossible %} gap-impossible
+                    {%- elif gap <= 0 and (-gap) >= max_games %} gap-safe
                     {%- elif gap <= 0 %} gap-ahead
                     {%- else %} gap-behind{% endif %}">
-                    {% if gap > 0 %}
+                    {% if comp.catchup_impossible %}
+                    Braunschweig bräuchte noch {{ comp.gap_with_hypo }}×, hat aber nur {{ loewen_games_left }} Spiel(e)
+                    übrig — nicht mehr aufzuholen
+                    {% elif gap > 0 %}
                     Löwen müssen noch <strong>{{ gap }}×</strong> mehr gewinnen
                     {% elif gap == 0 %}
                     Gleichstand — Direktvergleich entscheidet
