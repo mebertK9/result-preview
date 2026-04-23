@@ -247,6 +247,17 @@
         }
 
         /* ---- Dashboard cards ---- */
+        .dash-all-toggle {
+            display: block;
+            margin-bottom: 10px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: #f0f0f0;
+            cursor: pointer;
+        }
+
         .dash-card {
             border: 1px solid #d0d0d0;
             border-radius: 10px;
@@ -262,6 +273,40 @@
             margin-bottom: 10px;
             padding-bottom: 6px;
             border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .dash-header-arrow {
+            font-size: 0.75rem;
+            color: #999;
+            transition: transform 0.15s;
+            flex-shrink: 0;
+        }
+
+        .dash-card.collapsed .dash-header-arrow {
+            transform: rotate(-90deg);
+        }
+
+        .dash-header-badge {
+            margin-left: auto;
+            font-size: 0.78rem;
+            font-weight: normal;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .dash-card.collapsed .dash-body {
+            display: none;
+        }
+
+        .dash-card.collapsed .dash-header {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
         }
 
         /* ---- Segment bars ---- */
@@ -485,10 +530,41 @@
 
     <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
 
+    <button class="dash-all-toggle" id="dashToggleAll" onclick="toggleAllCards()">Alle einklappen</button>
+
     {% for comp_team, comp in competitor_data.items() %}
     <div class="dash-card">
 
-        <div class="dash-header">vs. {{ comp_team }}</div>
+        {# Determine badge class and text for the collapsed summary line #}
+        {% set gap = comp.mandatory_wins %}
+        {% set max_games = comp.max_games %}
+        {% if comp.catchup_impossible %}
+        {% set badge_cls = "gap-impossible" %}
+        {% set badge_txt = "Nicht mehr aufzuholen" %}
+        {% elif comp.lead_safe %}
+        {% set badge_cls = "gap-safe" %}
+        {% set badge_txt = "✅ Sicher an " ~ sn(comp_team) ~ " vorbei!" %}
+        {% elif gap > 0 %}
+        {% set badge_cls = "gap-behind" %}
+        {% set badge_txt = "+" ~ gap ~ " Siege nötig" %}
+        {% elif gap == 0 %}
+        {% set badge_cls = "gap-ahead" %}
+        {% set badge_txt = "Gleichstand" %}
+        {% elif (-gap) >= max_games %}
+        {% set badge_cls = "gap-safe" %}
+        {% set badge_txt = (-gap) ~ " Siege vorne ✅" %}
+        {% else %}
+        {% set badge_cls = "gap-ahead" %}
+        {% set badge_txt = (-gap) ~ " Siege vorne" %}
+        {% endif %}
+
+        <div class="dash-header" onclick="toggleCard(this.closest('.dash-card'))">
+            <span class="dash-header-arrow">▼</span>
+            vs. {{ comp_team }}
+            <span class="dash-header-badge dash-gap-badge {{ badge_cls }}">{{ badge_txt }}</span>
+        </div>
+
+        <div class="dash-body">
 
         {# ── Segment bars ─────────────────────────────────────────────── #}
         <div class="dash-bars">
@@ -542,15 +618,12 @@
                 <span class="dash-bar-label">Abstand</span>
                 <div class="dash-gap-badge
                     {%- if comp.catchup_impossible %} gap-impossible
-                    {%- elif comp.lead_safe %} gap-safe
                     {%- elif gap <= 0 and (-gap) >= max_games %} gap-safe
                     {%- elif gap <= 0 %} gap-ahead
                     {%- else %} gap-behind{% endif %}">
                     {% if comp.catchup_impossible %}
                     Braunschweig bräuchte noch {{ comp.gap_with_hypo }} Siege, hat aber nur {{ comp.loewen_games_left }} Spiel(e)
                     übrig — nicht mehr aufzuholen
-                    {% elif comp.lead_safe %}
-                    Braunschweig kann von {{ sn(comp_team) }} nicht mehr eingeholt werden &nbsp;✅
                     {% elif gap > 0 %}
                     Löwen müssen noch <strong>{{ gap }}×</strong> mehr gewinnen
                     {% elif gap == 0 %}
@@ -670,6 +743,8 @@
                 </table>
             </div>
         </div>
+
+        </div>{# end .dash-body #}
 
     </div>{# end .dash-card #}
     {% endfor %}
@@ -1021,10 +1096,34 @@
             document.querySelectorAll('.dv-check').forEach(function (cb) {
                 cb.addEventListener('change', saveScroll);
             });
-            document.querySelectorAll('#teamFilter input[type=checkbox]').forEach(function (cb) {
-                cb.addEventListener('change', saveScroll);
-            });
         })();
+    </script>
+
+    <script>
+        function toggleCard(card) {
+            card.classList.toggle('collapsed');
+            updateToggleAllLabel();
+        }
+
+        function toggleAllCards() {
+            var cards = document.querySelectorAll('.dash-card');
+            var allCollapsed = Array.from(cards).every(function (c) { return c.classList.contains('collapsed'); });
+            cards.forEach(function (c) {
+                if (allCollapsed) {
+                    c.classList.remove('collapsed');
+                } else {
+                    c.classList.add('collapsed');
+                }
+            });
+            updateToggleAllLabel();
+        }
+
+        function updateToggleAllLabel() {
+            var cards = document.querySelectorAll('.dash-card');
+            var allCollapsed = Array.from(cards).every(function (c) { return c.classList.contains('collapsed'); });
+            var btn = document.getElementById('dashToggleAll');
+            if (btn) btn.textContent = allCollapsed ? 'Alle aufklappen' : 'Alle einklappen';
+        }
     </script>
 
 
