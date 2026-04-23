@@ -318,6 +318,11 @@ def home():
         gap_with_hypo = comp_full_wins - bsw_full_wins   # > 0: BSW is behind
         catchup_impossible = gap_with_hypo > loewen_games_left
 
+        # Only count games that have not been tipped yet
+        comp_untipped_count = sum(1 for g in comp_pending_raw if g["idx"] not in hypothetical)
+        loewen_untipped_count = sum(1 for g in loewen_pending if g["idx"] not in hypothetical)
+        catchup_impossible = gap_with_hypo > loewen_untipped_count
+
         # Mini standings slice: one row above the better-ranked team,
         # one row below the worse-ranked team, clamped to valid indices
         mini_top = max(0, min(bsw_rank, comp_rank) - 2)          # 0-indexed, inclusive
@@ -331,8 +336,9 @@ def home():
             "mandatory_wins": mandatory_wins,
             "gap_with_hypo": gap_with_hypo,
             "catchup_impossible": catchup_impossible,
-            "comp_games_left": len(comp_pending_raw),
-            "max_games": max(len(comp_pending_raw), loewen_games_left),
+            "comp_games_left": comp_untipped_count,
+            "loewen_games_left": loewen_untipped_count,
+            "max_games": max(comp_untipped_count, loewen_untipped_count),
             "comp_pending": comp_pending_raw,
             "comp_rank": comp_rank,
             "mini_standings": mini_standings,
@@ -353,10 +359,10 @@ def home():
                            rescue={},
                            visible_completed=visible_completed,
                            visible_pending=visible_pending,
-                           is_admin=(current_user.id == ADMIN_USER),
                            competitor_data=competitor_data,
                            bsw_rank=bsw_rank,
                            loewen_pending_cards=loewen_pending,
+                           is_admin=(current_user.id == ADMIN_USER),
                            loewen_const=LOEWEN)
 
 # ── Score routes ──────────────────────────────────────────────────────────────

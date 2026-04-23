@@ -465,6 +465,7 @@
     ============================================================ #}
     {% set name_map = {
     "Science City Jena": "Jena",
+    "Skyliners Frankfurt": "Skyliners",
     "Veolia Towers Hamburg": "Towers",
     "BB Löwen Braunschweig": "Löwen",
     "MHP RIESEN Ludwigsburg": "Riesen",
@@ -530,7 +531,7 @@
                     <div class="dash-seg seg-pending" title="offen"></div>
                     {% endif %}
                     {% endfor %}
-                    <span class="dash-bar-count">{{ loewen_games_left }}</span>
+                    <span class="dash-bar-count">{{ comp.loewen_games_left }}</span>
                 </div>
             </div>
 
@@ -545,7 +546,7 @@
                     {%- elif gap <= 0 %} gap-ahead
                     {%- else %} gap-behind{% endif %}">
                     {% if comp.catchup_impossible %}
-                    Braunschweig bräuchte noch {{ comp.gap_with_hypo }}×, hat aber nur {{ loewen_games_left }} Spiel(e)
+                    Braunschweig bräuchte noch {{ comp.gap_with_hypo }} Siege, hat aber nur {{ comp.loewen_games_left }} Spiel(e)
                     übrig — nicht mehr aufzuholen
                     {% elif gap > 0 %}
                     Löwen müssen noch <strong>{{ gap }}×</strong> mehr gewinnen
