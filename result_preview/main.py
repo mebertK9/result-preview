@@ -313,15 +313,18 @@ def home():
 
         comp_rank = rank_lookup.get(comp_team, len(full_standings))
 
-        # Gap including hypotheticals — detects when catchup is mathematically impossible
+        # Gap including hypotheticals — detects impossible/safe states
         comp_full_wins = next(stats.wins for team, stats in full_standings if team.name == comp_team)
-        gap_with_hypo = comp_full_wins - bsw_full_wins   # > 0: BSW is behind
-        catchup_impossible = gap_with_hypo > loewen_games_left
+        gap_with_hypo = comp_full_wins - bsw_full_wins   # > 0: BSW is behind; < 0: BSW is ahead
 
         # Only count games that have not been tipped yet
         comp_untipped_count = sum(1 for g in comp_pending_raw if g["idx"] not in hypothetical)
         loewen_untipped_count = sum(1 for g in loewen_pending if g["idx"] not in hypothetical)
+
+        # BSW can no longer catch up (would need more wins than games remaining)
         catchup_impossible = gap_with_hypo > loewen_untipped_count
+        # Competitor can no longer catch up to BSW (BSW lead exceeds competitor's remaining games)
+        lead_safe = gap_with_hypo < 0 and (-gap_with_hypo) > comp_untipped_count
 
         # Mini standings slice: one row above the better-ranked team,
         # one row below the worse-ranked team, clamped to valid indices
@@ -336,6 +339,7 @@ def home():
             "mandatory_wins": mandatory_wins,
             "gap_with_hypo": gap_with_hypo,
             "catchup_impossible": catchup_impossible,
+            "lead_safe": lead_safe,
             "comp_games_left": comp_untipped_count,
             "loewen_games_left": loewen_untipped_count,
             "max_games": max(comp_untipped_count, loewen_untipped_count),

@@ -488,7 +488,7 @@
     {% for comp_team, comp in competitor_data.items() %}
     <div class="dash-card">
 
-        <div class="dash-header">vs. {{ sn(comp_team) }}</div>
+        <div class="dash-header">vs. {{ comp_team }}</div>
 
         {# ── Segment bars ─────────────────────────────────────────────── #}
         <div class="dash-bars">
@@ -542,12 +542,15 @@
                 <span class="dash-bar-label">Abstand</span>
                 <div class="dash-gap-badge
                     {%- if comp.catchup_impossible %} gap-impossible
+                    {%- elif comp.lead_safe %} gap-safe
                     {%- elif gap <= 0 and (-gap) >= max_games %} gap-safe
                     {%- elif gap <= 0 %} gap-ahead
                     {%- else %} gap-behind{% endif %}">
                     {% if comp.catchup_impossible %}
                     Braunschweig bräuchte noch {{ comp.gap_with_hypo }} Siege, hat aber nur {{ comp.loewen_games_left }} Spiel(e)
                     übrig — nicht mehr aufzuholen
+                    {% elif comp.lead_safe %}
+                    Braunschweig kann von {{ sn(comp_team) }} nicht mehr eingeholt werden &nbsp;✅
                     {% elif gap > 0 %}
                     Löwen müssen noch <strong>{{ gap }}×</strong> mehr gewinnen
                     {% elif gap == 0 %}
@@ -1016,6 +1019,9 @@
                 link.addEventListener('click', saveScroll);
             });
             document.querySelectorAll('.dv-check').forEach(function (cb) {
+                cb.addEventListener('change', saveScroll);
+            });
+            document.querySelectorAll('#teamFilter input[type=checkbox]').forEach(function (cb) {
                 cb.addEventListener('change', saveScroll);
             });
         })();
