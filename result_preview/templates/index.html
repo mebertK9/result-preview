@@ -496,7 +496,7 @@
         {% set badge_txt = "Nicht mehr aufzuholen" %}
         {% elif comp.lead_safe %}
         {% set badge_cls = "gap-safe" %}
-        {% set badge_txt = "✅ Sicher an " ~ sn(comp_team) ~ " vorbei!" %}
+        {% set badge_txt = "✅ Sicher vor " ~ sn(comp_team) ~ "! Nicht mehr aufzuholen!!" %}
         {% elif gap > 0 %}
         {% set badge_cls = "gap-behind" %}
         {% set badge_txt = "+" ~ gap ~ " Sieg(e) nötig" %}
@@ -575,14 +575,14 @@
                     {%- elif gap <= 0 %} gap-ahead
                     {%- else %} gap-behind{% endif %}">
                     {% if comp.catchup_impossible %}
-                    Braunschweig bräuchte noch {{ comp.gap_with_hypo }} Sieg(e), hat aber nur {{ comp.loewen_games_left }} Spiel(e)
+                    Die Löwen bräuchten noch {{ comp.gap_with_hypo }} Sieg(e), haben aber nur {{ comp.loewen_games_left }} Spiel(e)
                     übrig — nicht mehr aufzuholen
                     {% elif gap > 0 %}
-                    Löwen müssen noch <strong>{{ gap }} Sieg(e)</strong> aufholen
+                    Die Löwen müssen noch <strong>{{ gap }} Sieg(e)</strong> aufholen
                     {% elif gap == 0 %}
                     Gleichstand — Direktvergleich entscheidet
                     {% else %}
-                    Löwen <strong>{{ -gap }}</strong> Sieg(e) Vorsprung
+                    Die Löwen haben <strong>{{ -gap }}</strong> Sieg(e) Vorsprung
                     {%- if (-gap) >= max_games %} &nbsp;✅{% endif %}
                     {% endif %}
                 </div>
