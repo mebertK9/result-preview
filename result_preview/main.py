@@ -8,7 +8,6 @@ from flask_login import (
 from werkzeug.security import check_password_hash
  
 from models.team import Team
-from data.util.rettungsgasse import Rettungsgasse
 from models.team_stats import TeamStats
 from data.games import saison_25_26
 from data.users import USERS, ADMIN_USER
@@ -35,7 +34,6 @@ def load_user(username):
 
 # Load persisted state on startup and init grid
 load_stats()
-_grid_state: dict[str, Rettungsgasse] = {"grid": {}}
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -145,20 +143,9 @@ def login_page():
         pw_hash = USERS.get(username)
         if pw_hash and check_password_hash(pw_hash, password):
             login_user(User(username), remember=True)
-            # Nils gets the special treatment
-            if username == 'Nils':
-                return redirect(url_for('nils_gate'))
             return redirect(url_for('home'))
         error = "Benutzername oder Passwort falsch."
     return render_template('login.html', error=error)
-
-@app.route('/nils-gate')
-@login_required
-def nils_gate():
-    # Only Nils may enter here — everyone else goes straight home
-    if current_user.id != 'Nils':
-        return redirect(url_for('home'))
-    return render_template('nils_gate.html')
 
 @app.route('/logout')
 @login_required
@@ -248,23 +235,6 @@ def home():
     # Calculate once before the loop, since LOEWEN doesn't change
     loewen_wins = wins_of_team(LOEWEN)
 
-    def games_for_competitor(competitor: str) -> list:
-        mandatory_rows = wins_of_team(competitor) - loewen_wins
-
-        pending_games = [
-            {"idx": idx, "team1": game[0], "team2": game[1]}
-            for idx, game in enumerate(saison_25_26)
-            if is_pending_game_of_team(game, competitor)
-        ]
-
-        # Mandatory slots first (padded with None if not enough games),
-        # then remaining games for buffer rows
-        mandatory_slots = pending_games[:mandatory_rows]
-        mandatory_slots += [None] * max(0, mandatory_rows - len(mandatory_slots))
-        buffer_slots = pending_games[mandatory_rows:]
-
-        return mandatory_slots + buffer_slots
-
     loewen_games_left = len(loewen_pending)
 
     def all_relevant_competitors() -> list[str]:
@@ -274,23 +244,6 @@ def home():
             and wins_of_team(team) - loewen_wins <= loewen_games_left
         ]
     left_competitors =  all_relevant_competitors()
-    all_competitor_games = {
-        competitor: games_for_competitor(competitor)
-        for competitor in left_competitors
-    }   
-
-    all_grids = {}
-
-    for comp_team in left_competitors:
-        current_rettungsgasse: Rettungsgasse
-        if comp_team not in _grid_state or _grid_state[comp_team] == {}:
-            current_rettungsgasse = Rettungsgasse(loewen_games_left, wins_of_team(comp_team) - loewen_wins)
-            _grid_state[comp_team] = current_rettungsgasse
-            current_rettungsgasse.init_grid(loewen_pending, all_competitor_games[comp_team])
-        else:
-            current_rettungsgasse = _grid_state[comp_team]
-
-        all_grids[comp_team] = current_rettungsgasse.grid
 
     # Build rank lookup from full standings (incorporates current hypotheticals)
     rank_lookup = {team.name: i + 1 for i, (team, _) in enumerate(full_standings)}
@@ -344,14 +297,10 @@ def home():
             "loewen_games_left": loewen_untipped_count,
             "max_games": max(comp_untipped_count, loewen_untipped_count),
             "comp_pending": comp_pending_raw,
-            "comp_rank": comp_rank,
             "mini_standings": mini_standings,
         }
 
     return render_template('index.html',
-                           all_grids={team_name: list(reversed(grid)) for team_name, grid in all_grids.items()},
-                           lion_games=list(reversed(loewen_pending)),  # reverse to match grid orientation
-                           all_competitor_games = {team_name: list(reversed(comp_game)) for team_name, comp_game in all_competitor_games.items()},
                            all_team_names=all_team_names,
                            selected_teams=selected_teams,
                            compare_teams=compare_teams,
@@ -360,11 +309,9 @@ def home():
                            hypothetical=hypothetical,
                            hypo_count=hypo_count,
                            hypo_wins=hypo_wins,
-                           rescue={},
                            visible_completed=visible_completed,
                            visible_pending=visible_pending,
                            competitor_data=competitor_data,
-                           bsw_rank=bsw_rank,
                            loewen_pending_cards=loewen_pending,
                            is_admin=(current_user.id == ADMIN_USER),
                            loewen_const=LOEWEN)
@@ -419,60 +366,6 @@ def finalize_game(idx):
 
     write_games_py()
     return redirect('/')
-
-@app.route("/move", methods=["POST"])
-@login_required
-def move():
-    row_to_transform = request.json["row"]
-    game = request.json["game"]
-    team = request.json["affected_team"]
-    competitor = request.json["competitor"]
-    score1 = request.json["score1"]
-    score2 = request.json["score2"]
-
-    team1 = game["team1"]
-    team2 = game["team2"]
-
-    if LOEWEN == team:
-        lion_or_gegner = "L"
-    elif team in (team1, team2):
-        lion_or_gegner = "G"
-    else:
-        lion_or_gegner = ""
-
-    action = _get_action(team1, team, score1, score2)
-
-    rettungsgasse = _grid_state[competitor]
-    grid = rettungsgasse.apply_action(row_to_transform, lion_or_gegner, action)
-
-    return jsonify(list(reversed(grid)))
-
-def _get_action(team1, team, score1, score2) -> str:
-    if(score1 == None or score2 == None):
-        return ""
-    
-    action=""    
-    home_won = int(score1) > int (score2)
-    if(team == team1):
-        if(home_won):
-            action = "S"
-        else:
-            action = "N"
-    else:
-        if(home_won):
-            action = "N"
-        else:
-            action = "S"
-
-    return action
-
-@app.route("/reset", methods=["POST"])
-@login_required
-def reset():
-    data = request.get_json()
-    team_name = data["team_name"]
-    _grid_state[team_name] = {}
-    return "", 204
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
