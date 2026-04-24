@@ -1,5 +1,5 @@
 saison_25_26 = [
-    ("Bayern München", "MHP RIESEN Ludwigsburg",93,59),
+    ("Bayern München", "MHP RIESEN Ludwigsburg", 93, 59),
     ("Fitness First Würzburg Baskets", "Bayern München"),
     ("Veolia Towers Hamburg", "Rostock Seawolves", 91, 86),
     ("Bayern München", "Rostock Seawolves"),
@@ -33,7 +33,7 @@ saison_25_26 = [
     ("Veolia Towers Hamburg", "SC RASTA Vechta", 83, 92),
     ("VET-CONCEPT Gladiators Trier", "Bayern München", 80, 104),
     ("Alba Berlin", "Telekom Baskets Bonn", 91, 75),
-    ("SC RASTA Vechta", "BB Löwen Braunschweig"),
+    ("SC RASTA Vechta", "BB Löwen Braunschweig", 120, 98),
     ("ratiopharm Ulm", "Veolia Towers Hamburg"),
     ("MHP RIESEN Ludwigsburg", "Rostock Seawolves"),
     ("Science City Jena", "VET-CONCEPT Gladiators Trier"),
