@@ -255,9 +255,6 @@ def home():
     # Build per-competitor dashboard data for the new card view
     competitor_data = {}
     for comp_team in left_competitors:
-        comp_wins_val = wins_of_team(comp_team)
-        mandatory_wins = comp_wins_val - loewen_wins  # > 0: BSW is behind; < 0: BSW is ahead
-
         comp_pending_raw = [
             {"idx": idx, "team1": game[0], "team2": game[1]}
             for idx, game in enumerate(saison_25_26)
@@ -289,11 +286,12 @@ def home():
         ]
 
         competitor_data[comp_team] = {
-            "mandatory_wins": mandatory_wins,
             "gap_with_hypo": gap_with_hypo,
             "catchup_impossible": catchup_impossible,
             "lead_safe": lead_safe,
             "comp_games_left": comp_untipped_count,
+            "loewen_full_wins": bsw_full_wins,
+            "comp_full_wins": comp_full_wins,
             "loewen_games_left": loewen_untipped_count,
             "max_games": max(comp_untipped_count, loewen_untipped_count),
             "comp_pending": comp_pending_raw,

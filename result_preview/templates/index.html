@@ -489,7 +489,7 @@
     <div class="dash-card">
 
         {# Determine badge class and text for the collapsed summary line #}
-        {% set gap = comp.mandatory_wins %}
+        {% set gap = comp.comp_full_wins - comp.loewen_full_wins %}
         {% set max_games = comp.max_games %}
         {% if comp.catchup_impossible %}
         {% set badge_cls = "gap-impossible" %}
@@ -499,16 +499,16 @@
         {% set badge_txt = "✅ Sicher an " ~ sn(comp_team) ~ " vorbei!" %}
         {% elif gap > 0 %}
         {% set badge_cls = "gap-behind" %}
-        {% set badge_txt = "+" ~ gap ~ " Siege nötig" %}
+        {% set badge_txt = "+" ~ gap ~ " Sieg(e) nötig" %}
         {% elif gap == 0 %}
         {% set badge_cls = "gap-ahead" %}
         {% set badge_txt = "Gleichstand" %}
         {% elif (-gap) >= max_games %}
         {% set badge_cls = "gap-safe" %}
-        {% set badge_txt = (-gap) ~ " Siege vorne ✅" %}
+        {% set badge_txt = (-gap) ~ " Sieg(e) Vorsprung ✅" %}
         {% else %}
         {% set badge_cls = "gap-ahead" %}
-        {% set badge_txt = (-gap) ~ " Siege vorne" %}
+        {% set badge_txt = (-gap) ~ " Sieg(e) Vorsprung" %}
         {% endif %}
 
         <div class="dash-header" onclick="toggleCard(this.closest('.dash-card'))">
@@ -539,7 +539,7 @@
                     <div class="dash-seg seg-pending" title="offen"></div>
                     {% endif %}
                     {% endfor %}
-                    <span class="dash-bar-count">{{ comp.comp_games_left }}</span>
+                    <span class="dash-bar-count">{{ comp.comp_full_wins }} Siege (inkl. Prognose)</span>
                 </div>
             </div>
 
@@ -560,12 +560,12 @@
                     <div class="dash-seg seg-pending" title="offen"></div>
                     {% endif %}
                     {% endfor %}
-                    <span class="dash-bar-count">{{ comp.loewen_games_left }}</span>
+                    <span class="dash-bar-count">{{ comp.loewen_full_wins }} Siege (inkl. Prognose)</span>
                 </div>
             </div>
 
             {# Win gap indicator #}
-            {% set gap = comp.mandatory_wins %}
+            {% set gap = comp.comp_full_wins - comp.loewen_full_wins %}
             {% set max_games = comp.max_games %}
             <div class="dash-bar-row">
                 <span class="dash-bar-label">Abstand</span>
@@ -575,14 +575,14 @@
                     {%- elif gap <= 0 %} gap-ahead
                     {%- else %} gap-behind{% endif %}">
                     {% if comp.catchup_impossible %}
-                    Braunschweig bräuchte noch {{ comp.gap_with_hypo }} Siege, hat aber nur {{ comp.loewen_games_left }} Spiel(e)
+                    Braunschweig bräuchte noch {{ comp.gap_with_hypo }} Sieg(e), hat aber nur {{ comp.loewen_games_left }} Spiel(e)
                     übrig — nicht mehr aufzuholen
                     {% elif gap > 0 %}
-                    Löwen müssen noch <strong>{{ gap }}×</strong> mehr gewinnen
+                    Löwen müssen noch <strong>{{ gap }} Sieg(e)</strong> aufholen
                     {% elif gap == 0 %}
                     Gleichstand — Direktvergleich entscheidet
                     {% else %}
-                    Löwen <strong>{{ -gap }}</strong> Sieg(e) vorne
+                    Löwen <strong>{{ -gap }}</strong> Sieg(e) Vorsprung
                     {%- if (-gap) >= max_games %} &nbsp;✅{% endif %}
                     {% endif %}
                 </div>
