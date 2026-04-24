@@ -344,6 +344,44 @@
             color: #fff;
         }
 
+        /* ---- Direct comparison toggle ---- */
+        .dv-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            vertical-align: middle;
+            margin-left: 10px;
+            font-size: 0.82rem;
+        }
+
+        .dv-toggle input { display: none; }
+
+        .dv-slider {
+            width: 36px;
+            height: 18px;
+            background: #d85a30;
+            border-radius: 9px;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .dv-slider::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
+        }
+
+        .dv-toggle input:checked ~ .dv-slider { background: #3aaa6e; }
+        .dv-toggle input:checked ~ .dv-slider::after { left: 20px; }
+
         /* ---- Score inputs inside card ---- */
         .dash-inputs {
             display: flex;
@@ -569,11 +607,13 @@
             {% set max_games = comp.max_games %}
             <div class="dash-bar-row">
                 <span class="dash-bar-label">Abstand</span>
+                {# gap badge div — add id for the direct-comparison toggle #}
                 <div class="dash-gap-badge
                     {%- if comp.catchup_impossible %} gap-impossible
                     {%- elif gap <= 0 and (-gap) >= max_games %} gap-safe
                     {%- elif gap <= 0 %} gap-ahead
-                    {%- else %} gap-behind{% endif %}">
+                    {%- else %} gap-behind{% endif %}"
+                    id="dc-badge-{{ loop.index }}">
                     {% if comp.catchup_impossible %}
                     Die Löwen bräuchten noch {{ comp.gap_with_hypo }} Sieg(e), haben aber nur {{ comp.loewen_games_left }} Spiel(e)
                     übrig — nicht mehr aufzuholen
@@ -581,6 +621,12 @@
                     Die Löwen müssen noch <strong>{{ gap }} Sieg(e)</strong> aufholen
                     {% elif gap == 0 %}
                     Gleichstand — Direktvergleich entscheidet
+                    <label class="dv-toggle" title="Wer gewinnt den direkten Vergleich?">
+                        <input type="checkbox" 
+                            onchange="applyDirectComparison(this, 'dc-badge-{{ loop.index }}', '{{ sn(comp_team) }}')">
+                        <span class="dv-slider"></span>
+                        <span class="dv-toggle-label">Löwen gewinnen</span>
+                    </label>
                     {% else %}
                     Die Löwen haben <strong>{{ -gap }}</strong> Sieg(e) Vorsprung
                     {%- if (-gap) >= max_games %} &nbsp;✅{% endif %}
@@ -908,6 +954,21 @@
             var allCollapsed = Array.from(cards).every(function (c) { return c.classList.contains('collapsed'); });
             var btn = document.getElementById('dashToggleAll');
             if (btn) btn.textContent = allCollapsed ? 'Alle aufklappen' : 'Alle einklappen';
+        }
+
+        function applyDirectComparison(checkbox, badgeId, shortCompName) {
+            var badge = document.getElementById(badgeId);
+            if (!badge) return;
+            var label = checkbox.parentElement.querySelector('.dv-toggle-label');
+            if (checkbox.checked) {
+                badge.classList.remove('gap-ahead', 'gap-behind', 'gap-impossible');
+                badge.classList.add('gap-safe');
+                if (label) label.textContent = 'Löwen gewinnen ✅';
+            } else {
+                badge.classList.remove('gap-safe', 'gap-behind', 'gap-impossible');
+                badge.classList.add('gap-ahead');
+                if (label) label.textContent = shortCompName + ' gewinnt ✗';
+            }
         }
     </script>
 
