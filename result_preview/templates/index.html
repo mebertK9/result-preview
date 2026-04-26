@@ -651,6 +651,7 @@
                         <td class="team-name {% if first_won %}bold{% endif %}">{{ sn(game.team1) }}</td>
                         <td class="team-name {% if second_won %}bold{% endif %}">{{ sn(game.team2) }}</td>
                         <td>
+                            <div style="display:flex;align-items:center;gap:4px;">
                             <form class="score-form" method="POST" action="/set_score/{{ game.idx }}">
                                 <input type="number" name="score1" inputmode="numeric"
                                     value="{% if has_hypo %}{{ hypothetical[game.idx][0] }}{% endif %}" placeholder="–">
@@ -667,6 +668,7 @@
                                 onclick="return confirm('Ergebnis {{ hypothetical[game.idx][0] }}:{{ hypothetical[game.idx][1] }} dauerhaft festschreiben?')">🔒</a>
                             {% endif %}
                             {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -685,6 +687,7 @@
                         <td class="team-name {% if first_won %}bold{% endif %}">{{ sn(game.team1) }}</td>
                         <td class="team-name {% if second_won %}bold{% endif %}">{{ sn(game.team2) }}</td>
                         <td>
+                            <div style="display:flex;align-items:center;gap:4px;">
                             <form class="score-form" method="POST" action="/set_score/{{ game.idx }}">
                                 <input type="number" name="score1" inputmode="numeric"
                                     value="{% if has_hypo %}{{ hypothetical[game.idx][0] }}{% endif %}" placeholder="–">
@@ -701,6 +704,7 @@
                                 onclick="return confirm('Ergebnis {{ hypothetical[game.idx][0] }}:{{ hypothetical[game.idx][1] }} dauerhaft festschreiben?')">🔒</a>
                             {% endif %}
                             {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
