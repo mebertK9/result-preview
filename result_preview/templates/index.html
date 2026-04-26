@@ -914,31 +914,27 @@
 
     <script>
         (function () {
-            var savedY = sessionStorage.getItem('scrollY');
-            if (savedY !== null) {
-                sessionStorage.removeItem('scrollY');
-                requestAnimationFrame(function () {
-                    requestAnimationFrame(function () {
-                        window.scrollTo(0, parseInt(savedY, 10));
-                    });
-                });
-            }
-            function saveScroll() {
-                sessionStorage.setItem('scrollY', window.scrollY);
-            }
-            document.querySelectorAll('.dv-check').forEach(function (cb) {
-                cb.addEventListener('change', saveScroll);
-            });
-            // NEUE ZEILE:
-            var tf = document.getElementById('teamFilter');
-            if (tf) { tf.addEventListener('change', saveScroll, true); }
-            document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
-                link.addEventListener('click', saveScroll);
-            });
-            document.querySelectorAll('.dv-check').forEach(function (cb) {
-                cb.addEventListener('change', saveScroll);
-            });
-        })();
+    history.scrollRestoration = 'manual';
+    var savedY = sessionStorage.getItem('scrollY');
+    if (savedY !== null) {
+        sessionStorage.removeItem('scrollY');
+        window.scrollTo(0, parseInt(savedY, 10));
+    }
+    function saveScroll() {
+        sessionStorage.setItem('scrollY', window.scrollY);
+    }
+    document.querySelectorAll('.score-form').forEach(function (form) {
+        form.addEventListener('submit', saveScroll);
+    });
+    document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
+        link.addEventListener('click', saveScroll);
+    });
+    document.querySelectorAll('.dv-check').forEach(function (cb) {
+        cb.addEventListener('change', saveScroll);
+    });
+    var tf = document.getElementById('teamFilter');
+    if (tf) { tf.addEventListener('change', saveScroll, true); }
+})();
     </script>
 
     <script>
