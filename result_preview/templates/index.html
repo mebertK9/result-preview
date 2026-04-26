@@ -916,15 +916,22 @@
         (function () {
             var savedY = sessionStorage.getItem('scrollY');
             if (savedY !== null) {
-                window.scrollTo(0, parseInt(savedY, 10));
                 sessionStorage.removeItem('scrollY');
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        window.scrollTo(0, parseInt(savedY, 10));
+                    });
+                });
             }
             function saveScroll() {
                 sessionStorage.setItem('scrollY', window.scrollY);
             }
-            document.querySelectorAll('.score-form').forEach(function (form) {
-                form.addEventListener('submit', saveScroll);
+            document.querySelectorAll('.dv-check').forEach(function (cb) {
+                cb.addEventListener('change', saveScroll);
             });
+            // NEUE ZEILE:
+            var tf = document.getElementById('teamFilter');
+            if (tf) { tf.addEventListener('change', saveScroll, true); }
             document.querySelectorAll('.btn-clear, .btn-finalize').forEach(function (link) {
                 link.addEventListener('click', saveScroll);
             });
