@@ -49,7 +49,7 @@ saison_25_26 = [
     ("BMA365 Bamberg Baskets", "Veolia Towers Hamburg", 85, 71),
     ("Bayern München", "SC RASTA Vechta", 90, 88),
     ("Alba Berlin", "Chemnitz 99ers", 82, 84),
-    ("MLP Academics Heidelberg", "SYNTAINICS MBC"),
+    ("MLP Academics Heidelberg", "SYNTAINICS MBC", 80, 75),
     ("Chemnitz 99ers", "Skyliners Frankfurt"),
     ("MHP RIESEN Ludwigsburg", "Bayern München"),
     ("ratiopharm Ulm", "Alba Berlin", 77, 89),
